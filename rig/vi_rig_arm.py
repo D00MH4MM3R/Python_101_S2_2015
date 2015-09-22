@@ -1,25 +1,5 @@
-"""
-MEL Code:
 
-joint -p 6.803994 0 -1.223752 ;
-joint -p 1.607027 0 1.79003 ;
-joint -p -5.564512 0 -0.937867 ;
-joint -p -8.702907 0 -1.082102 ;
-
-ikHandle -sol ikRPsolver;
-
-circle -ch on -o on -nr 0 1 0 -r 1.362392 ;
-move -rpr -5.564512 0 -0.937867 ;
-move -5.564512 0 -0.937867 group2.scalePivot group2.rotatePivot ;
-orientConstraint -offset 0 0 0 -weight 1;
-select -r group2_orientConstraint1 ;
-delete
-
-
-
-"""
-
-
+import maya.cmds as cmds
 #create IK joints
 cmds.joint(n = 'ik_shoulder_jnt', p = [6.803994, 0, -1.223752] )
 cmds.joint(n = 'ik_elbow_jnt', p = [1.607027, 0, 1.79003] )
@@ -60,11 +40,45 @@ cmds.xform('ctrl_grp_ikWrist', t = pos, ws = True)
 #parent ik to ctrl
 cmds.parent('ikh_arm', 'ctrl_ikWrist')
 
+#create locator for pole vector
+cmds.spaceLocator(n = 'pole_vector', p=(0, 0, 0) )
 
-#create fk rig
+#get xform of ik_elbow_jnt
+elbowPos = cmds.xform('ik_elbow_jnt', q = True, t = True, ws = True)
+cmds.xform('pole_vector', t = elbowPos, ws = True)
 
-#parent constrain ik and fk to rig
+#create poly vector
+cmds.select('pole_vector', r = True)
+cmds.select('ikh_arm', add = True)
 
+cmds.poleVectorConstraint(weight = 1)
+
+cmds.select(deselect = True)
+
+
+#create fk rig-----------------------------------------------------------------------------------------------------
+
+
+#create circle control object 
+cmds.circle(n = 'ctrl_fkElbow', ch = True, o = True, nr = (1,0,0), r = 1, c = (0,0,0))
+
+#Group circle and move to ik_wrist_jnt pos
+cmds.group(em = True, n = 'ctrl_grp_fkWrist')
+cmds.parent('ctrl_fkElbow', 'ctrl_grp_fkWrist')
+cmds.xform('ctrl_grp_fkWrist', t = elbowPos, ws = True)
+
+
+#create orient constraint between ctrl_fkElbow and fk_elbow_jnt
+cmds.orientConstraint('ctrl_fkElbow', 'fk_elbow_jnt')
+
+
+
+
+#parent constrain ik_elbow_jnt to rig_elbow_jnt
+cmds.parentConstraint('ik_elbow_jnt', 'rig_elbow_jnt', mo = True, weight = 1)
+
+#parent constrain fk_elbow_jnt to rig_elbow_jnt
+cmds.parentConstraint('fk_elbow_jnt', 'rig_elbow_jnt', mo = True, weight = 1)
 
 
 
