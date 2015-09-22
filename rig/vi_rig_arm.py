@@ -83,3 +83,28 @@ cmds.parentConstraint('fk_elbow_jnt', 'rig_elbow_jnt', mo = True, weight = 1)
 
 
 
+
+#add IKFK blend attribute to rig_elbow_int--------------------------------------------------------
+cmds.select('rig_elbow_jnt', r = True)
+
+#add blend attribute to rig_elbow_jnt
+cmds.addAttr(longName = 'IKFK_Blend', attributeType = 'float', min = 0, max = 10, dv = 0, w = True, k = True)
+
+#set set driven keys for blend attribute
+
+cmds.setAttr('rig_e lbow_jnt.IKFK_Blend', 0)
+cmds.setAttr('rig_elbow_jnt_parentConstraint1.ik_elbow_jntW0', 0)
+cmds.setAttr('rig_elbow_jnt_parentConstraint1.fk_elbow_jntW1', 1)
+
+cmds.setDrivenKeyframe('rig_elbow_jnt_parentConstraint1.ik_elbow_jntW0', cd ='rig_e lbow_jnt.IKFK_Blend')
+cmds.setDrivenKeyframe('rig_elbow_jnt_parentConstraint1.fk_elbow_jntW1', cd ='rig_e lbow_jnt.IKFK_Blend')
+
+cmds.setAttr('rig_e lbow_jnt.IKFK_Blend', 10)
+cmds.setAttr('rig_elbow_jnt_parentConstraint1.ik_elbow_jntW0', 1)
+cmds.setAttr('rig_elbow_jnt_parentConstraint1.fk_elbow_jntW1', 0)
+
+cmds.setDrivenKeyframe('rig_elbow_jnt_parentConstraint1.ik_elbow_jntW0', cd ='rig_e lbow_jnt.IKFK_Blend')
+cmds.setDrivenKeyframe('rig_elbow_jnt_parentConstraint1.fk_elbow_jntW1', cd ='rig_e lbow_jnt.IKFK_Blend')
+
+cmds.setAttr('rig_e lbow_jnt.IKFK_Blend', 0)
+
