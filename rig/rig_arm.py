@@ -64,47 +64,23 @@ def createfkCtrls(ctrlinfo):
 createfkCtrls(fkctrl_list)
 
 #Parent FK Controls to FK joints
-def parentfkCtrls(parentinfo):
-    for item in parentinfo:
-        #cmds.parent(item in control list, item in joint list)
+def parentfkCtrls(ctrlinfo, jntinfo):
+    for i in range(len(ctrlinfo)):
+        for u in range(len(jntinfo)):
+            if i == u:
+                cmds.parent(ctrlinfo[i][0], jntinfo[u][0])
+                cmds.setAttr(ctrlinfo[i][0] + '.translateX', 0)
+                cmds.setAttr(ctrlinfo[i][0] + '.translateY', 0)
+                cmds.setAttr(ctrlinfo[i][0] + '.translateZ', 0)
+                cmds.setAttr(ctrlinfo[i][0] + '.rotateZ', 90)
+                cmds.makeIdentity(a = True, t = 1, r = 1, s = 1, n = 0, pn = 1)
+                cmds.parent(ctrlinfo[i][0], w = True)
+                cmds.delete(ctrlinfo[i][0], ch = True)
+                cmds.parent(ctrlinfo[i][0] + 'Shape', jntinfo[u][0], r = True, s = True)
+                cmds.delete(ctrlinfo[i][0])
 
 parentfkCtrls(fkctrl_list, fkjnt_list)
 
-#Shoulder
-cmds.parent('shoulderFK_ctrl', 'shoulderFK_jnt')
-cmds.setAttr('shoulderFK_ctrl.translateX', 0)
-cmds.setAttr('shoulderFK_ctrl.translateY', 0)
-cmds.setAttr('shoulderFK_ctrl.translateZ', 0)
-cmds.setAttr('shoulderFK_ctrl.rotateZ', 90)
-cmds.makeIdentity(a = True, t = 1, r = 1, s = 1, n = 0, pn = 1)
-cmds.parent('shoulderFK_ctrl', w = True)
-cmds.delete('shoulderFK_ctrl', ch = True)
-cmds.parent('shoulderFK_ctrlShape', 'shoulderFK_jnt', r = True, s = True)
-cmds.delete('shoulderFK_ctrl')
-
-#Elbow
-cmds.parent('elbowFK_ctrl', 'elbowFK_jnt')
-cmds.setAttr('elbowFK_ctrl.translateX', 0)
-cmds.setAttr('elbowFK_ctrl.translateY', 0)
-cmds.setAttr('elbowFK_ctrl.translateZ', 0)
-cmds.setAttr('elbowFK_ctrl.rotateZ', 90)
-cmds.makeIdentity(a = True, t = 1, r = 1, s = 1, n = 0, pn = 1)
-cmds.parent('elbowFK_ctrl', w = True)
-cmds.delete('elbowFK_ctrl', ch = True)
-cmds.parent('elbowFK_ctrlShape', 'elbowFK_jnt', r = True, s = True)
-cmds.delete('elbowFK_ctrl')
-
-#Wrist
-cmds.parent('wristFK_ctrl', 'wristFK_jnt')
-cmds.setAttr('wristFK_ctrl.translateX', 0)
-cmds.setAttr('wristFK_ctrl.translateY', 0)
-cmds.setAttr('wristFK_ctrl.translateZ', 0)
-cmds.setAttr('wristFK_ctrl.rotateZ', 90)
-cmds.makeIdentity(a = True, t = 1, r = 1, s = 1, n = 0, pn = 1)
-cmds.parent('wristFK_ctrl', w = True)
-cmds.delete('wristFK_ctrl', ch = True)
-cmds.parent('wristFK_ctrlShape', 'wristFK_jnt', r = True, s = True)
-cmds.delete('wristFK_ctrl')
 
 #
 #Connect IK and FK joints to Bind
