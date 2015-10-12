@@ -1,21 +1,25 @@
 import maya.cmds as cmds
+bindjnt_list = [['shoulderBind_jnt', [0, 0, 0], [180, 0, 0]], ['elbowBind_jnt', [3, 0, 0], [0, 0, 0]], ['wristBind_jnt', [6, 0, 0], [0, 0, 0]]]
+ikjnt_list = [['shoulderIK_jnt', [0, 0, 0], [180, 0, 0], [0, 0, 0]], ['elbowIK_jnt', [3, 0, 0], [0, 0, 0]], ['wristIK_jnt', [6, 0, 0], [0, 0, 0]]]
+fkjnt_list = [['shoulderFK_jnt', [0, 0, 0], [180, 0, 0]], ['elbowFK_jnt', [3, 0, 0], [0, 0, 0]], ['wristFK_jnt', [6, 0, 0], [0, 0, 0]]]
+
+def createJoint(jntinfo):
+    for i in range(len(jntinfo)):
+        if i == 0:
+            cmds.joint(n = i[0], p = i[1], o = i[2])
+        else:
+            cmds.joint(n = i[0], p = i[1])
 
 #Create Bind Joints
-cmds.joint(n = 'shoulderBind_jnt', p = [0, 0, 0], o = [180, 0, 0])
-cmds.joint(n = 'elbowBind_jnt', p = [3, 0, 0])
-cmds.joint(n = 'wristBind_jnt', p = [6, 0, 0])
+createJoint(bindjnt_list)
 cmds.select(d = True)
 
 #Create IK Joints
-cmds.joint(n = 'shoulderIK_jnt', p = [0, 0, 0], o = [180, 0, 0])
-cmds.joint(n = 'elbowIK_jnt', p = [3, 0, 0])
-cmds.joint(n = 'wristIK_jnt', p = [6, 0, 0])
+createJoint(ikjnt_list)
 cmds.select(d = True)
 
 #Create FK Joints
-cmds.joint(n = 'shoulderFK_jnt', p = [0, 0, 0], o = [180, 0, 0])
-cmds.joint(n = 'elbowFK_jnt', p = [3, 0, 0])
-cmds.joint(n = 'wristFK_jnt', p = [6, 0, 0])
+createJoint(fkjnt_list)
 cmds.select(d = True)
 
 #
