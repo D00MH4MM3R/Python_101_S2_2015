@@ -6,9 +6,9 @@ fkjnt_list = [['shoulderFK_jnt', [0, 0, 0], [180, 0, 0]], ['elbowFK_jnt', [3, 0,
 def createJoint(jntinfo):
     for i in range(len(jntinfo)):
         if i == 0:
-            cmds.joint(n = i[0], p = i[1], o = i[2])
+            cmds.joint(n = jntinfo[i][0], p = jntinfo[i][1], o = jntinfo[i][2])
         else:
-            cmds.joint(n = i[0], p = i[1])
+            cmds.joint(n = jntinfo[i][0], p = jntinfo[i][1])
 
 #Create Bind Joints
 createJoint(bindjnt_list)
@@ -56,12 +56,20 @@ cmds.poleVectorConstraint('armPV_ctrl', 'armIK_HDL')
 #FK Setup
 #
 
+fkctrl_list = [['shoulderFK_ctrl', [0, 1, 0], [0, 0, 0]], ['elbowFK_ctrl', [0, 1, 0], [0, 0, 0]], ['wristFK_ctrl', [0, 1, 0], [0, 0, 0]]]
+def createfkCtrls(ctrlinfo):
+    for item in ctrlinfo:
+        cmds.circle(n = item[0], nr = item[1], c = item[2])
 #Create FK Controls
-cmds.circle(n ='shoulderFK_ctrl', nr = (0, 1, 0), c = (0, 0, 0))
-cmds.circle(n ='elbowFK_ctrl', nr = (0, 1, 0), c = (0, 0, 0))
-cmds.circle(n ='wristFK_ctrl', nr = (0, 1, 0), c = (0, 0, 0))
+createfkCtrls(fkctrl_list)
 
 #Parent FK Controls to FK joints
+def parentfkCtrls(parentinfo):
+    for item in parentinfo:
+        #cmds.parent(item in control list, item in joint list)
+
+parentfkCtrls(fkctrl_list, fkjnt_list)
+
 #Shoulder
 cmds.parent('shoulderFK_ctrl', 'shoulderFK_jnt')
 cmds.setAttr('shoulderFK_ctrl.translateX', 0)
