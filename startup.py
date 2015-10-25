@@ -8,4 +8,4 @@ cmds.currentUnit(time = 'ntsc')
 #change the current linear unit to inches
 cmds.currentUnit(linear = 'cm')
 
-import ui.ui as ui
+import rdui.ui as ui
