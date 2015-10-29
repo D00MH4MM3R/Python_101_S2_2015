@@ -4,7 +4,9 @@ ikjnt_list = [['shoulderIK_jnt', [0, 0, 0], [180, 0, 0], [0, 0, 0]], ['elbowIK_j
 fkjnt_list = [['shoulderFK_jnt', [0, 0, 0], [180, 0, 0]], ['elbowFK_jnt', [3, 0, 0], [0, 0, 0]], ['wristFK_jnt', [6, 0, 0], [0, 0, 0]]]
 
 class Rig_Arm:
-    
+    def __init__(self):
+        self.rig_arm()
+        
     def rig_arm(self):
         #Create Bind Joints
         self.createJoint(bindjnt_list)
