@@ -10,4 +10,3 @@ cmds.currentUnit(linear = 'cm')
 
 import rdui.ui as ui
 reload(ui)
-ui.Rdojo_UI()
