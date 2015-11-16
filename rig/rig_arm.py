@@ -1,23 +1,17 @@
+ikj_list = [['ik_shoulder_jnt', [2, 0, 3]], ['ik_elbow_jnt', [0, 0, 0]], ['ik_wrist_jnt', [1, 0, -3]], ['ik_hand_jnt', [1, 0, -4]]]
+fkj_list = [['fk_shoulder_jnt', [2, 0, 3], 'ctrl_fkShoulder'], ['fk_elbow_jnt', [0, 0, 0], 'ctrl_fkElbow'], ['fk_wrist_jnt', [1, 0, -3], 'ctrl_fkWrist'], ['fk_hand_jnt', [1, 0, -4], 'ctrl_fkHand']]
+bcj_list = [['rig_shoulder_jnt', [2, 0, 3]], ['rig_elbow_jnt', [0, 0, 0]], ['rig_wrist_jnt', [1, 0, -3]], ['rig_hand_jnt', [1, 0, -4]]]
 
-# Create IK joints
-cmds.joint( n='ik_shoulder_jnt', p=[2, 0, 3] )
-cmds.joint( n='ik_elbow_jnt', p=[0, 0, 0] )
-cmds.joint( n='ik_wrist_jnt', p=[1, 0, -3] )
-cmds.joint( n='ik_hand_jnt', p=[1, 0, -4] )
+for item in ikj_list:
+    cmds.joint ( n=item[0], p=item[1])
 cmds.select( d=True )
 
-# Create FK joints
-cmds.joint( n='fk_shoulder_jnt', p=[2, 0, 3] )
-cmds.joint( n='fk_elbow_jnt', p=[0, 0, 0] )
-cmds.joint( n='fk_wrist_jnt', p=[1, 0, -3] )
-cmds.joint( n='fk_hand_jnt', p=[1, 0, -4] )
+for item in fkj_list:
+    cmds.joint ( n=item[0], p=item[1])
 cmds.select( d=True )
-
-# Create blend chain joints
-cmds.joint( n='rig_shoulder_jnt', p=[2, 0, 3] )
-cmds.joint( n='rig_elbow_jnt', p=[0, 0, 0] )
-cmds.joint( n='rig_wrist_jnt', p=[1, 0, -3] )
-cmds.joint( n='rig_hand_jnt', p=[1, 0, -4] )
+    
+for item in bcj_list:
+    cmds.joint ( n=item[0], p=item[1])
 cmds.select( d=True )
 
 # Create IKHandle
@@ -63,31 +57,14 @@ cmds.setAttr ( 'ctrl_pv_armShape.visibleInRefractions', 0 )
 cmds.hyperShade( assign=pv_shader )
 cmds.poleVectorConstraint( 'ctrl_pv_arm', 'ikHarm' )
 
-
-# Create FK controls
-# Shoulder ctrl
-pos_shoulderfk = cmds.xform('fk_shoulder_jnt', q=True, t=True, ws=True)
-cmds.group(em=True, name='ctrl_fkShoulder_grp')
-cmds.circle(n='ctrl_fkShoulder', nr=(0, 0, 1), c=(0, 0, 0) )
-cmds.parent('ctrl_fkShoulder', 'ctrl_fkShoulder_grp')
-cmds.xform('ctrl_fkShoulder_grp', t=pos_shoulderfk, ws=True)
-cmds.parentConstraint( 'ctrl_fkShoulder', 'fk_shoulder_jnt', mo=True )
-
-# Elbow ctrl
-pos_elbowfk = cmds.xform('fk_elbow_jnt', q=True, t=True, ws=True)
-cmds.group(em=True, name='ctrl_fkElbow_grp')
-cmds.circle(n='ctrl_fkElbow', nr=(0, 0, 1), c=(0, 0, 0) )
-cmds.parent('ctrl_fkElbow', 'ctrl_fkElbow_grp')
-cmds.xform('ctrl_fkElbow_grp', t=pos_elbowfk, ws=True)
-cmds.parentConstraint( 'ctrl_fkElbow', 'fk_elbow_jnt', mo=True )
-
-# Wrist ctrl
-pos_wristfk = cmds.xform('fk_wrist_jnt', q=True, t=True, ws=True)
-cmds.group(em=True, name='ctrl_fkWrist_grp')
-cmds.circle(n='ctrl_fkWrist', nr=(0, 0, 1), c=(0, 0, 0) )
-cmds.parent('ctrl_fkWrist', 'ctrl_fkWrist_grp')
-cmds.xform('ctrl_fkWrist_grp', t=pos_wristfk, ws=True)
-cmds.parentConstraint( 'ctrl_fkWrist', 'fk_wrist_jnt', mo=True )
+for i in range(len(fkj_list)-1):
+    pos_fk = cmds.xform(fkj_list[i][0], q=True, t=True, ws=True)
+    cmds.group(em=True, name=str(fkj_list[i][2])+'_grp')
+    cmds.circle(n=fkj_list[i][2], nr=(0, 0, 1), c=(0, 0, 0) )
+    cmds.parent(fkj_list[i][2], str(fkj_list[i][2])+'_grp')
+    cmds.xform(str(fkj_list[i][2])+'_grp', t=pos_fk, ws=True)
+    cmds.parentConstraint( fkj_list[i][2], fkj_list[i][0], mo=True )
+    del pos_fk
 
 # Parent ctrls
 # Fk
@@ -96,9 +73,5 @@ cmds.parent( 'ctrl_fkElbow_grp', 'ctrl_fkShoulder')
 # Ik
 cmds.parent( 'ctrl_ikWrist_grp', 'ctrl_ikShoulder')
 
-
-# Create constraint between joint chains
-cmds.parentConstraint( 'fk_shoulder_jnt', 'ik_shoulder_jnt', 'rig_shoulder_jnt', mo=True )
-cmds.parentConstraint( 'fk_elbow_jnt', 'ik_elbow_jnt', 'rig_elbow_jnt', mo=True )
-cmds.parentConstraint( 'fk_wrist_jnt', 'ik_wrist_jnt', 'rig_wrist_jnt', mo=True )
-cmds.parentConstraint( 'fk_hand_jnt', 'ik_hand_jnt', 'rig_hand_jnt', mo=True )
+for i in range(len(fkj_list)):
+    cmds.parentConstraint(fkj_list[i][0], ikj_list[i][0], bcj_list[i][0], mo=True )
