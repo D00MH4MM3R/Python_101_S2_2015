@@ -46,4 +46,5 @@ Temporary Items
 .pyc
 *.pyc
 
+# PyCharm project folder contents
 .idea
