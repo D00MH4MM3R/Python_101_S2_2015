@@ -1,0 +1,42 @@
+import maya.cmds as cmds
+
+# Creating the Target Joint chain
+cmds.joint(n = 'c_shoulder_jnt', p = (0, 0, 0))
+cmds.joint(n = 'c_elbow_jnt', p = (7, 0, -1))
+cmds.joint(n = 'c_wrist_jnt', p = (14, 0, 0))
+cmds.joint(n = 'c_wristEnd_jnt', p = (15, 0, 0))
+cmds.select(d=True)
+
+# Creating the IK Joint chain
+cmds.joint(n = 'c_IK_shoulder_jnt', p = (0, 0, 0))
+cmds.joint(n = 'c_IK_elbow_jnt', p = (7, 0, -1))
+cmds.joint(n = 'c_IK_wrist_jnt', p = (14, 0, 0))
+cmds.joint(n = 'c_IK_wristEnd_jnt', p = (15, 0, 0))
+cmds.select(d=True)
+
+# Creating the FK Joint chain
+cmds.joint(n = 'c_FK_shoulder_jnt', p = (0, 0, 0))
+cmds.joint(n = 'c_FK_elbow_jnt', p = (7, 0, -1))
+cmds.joint(n = 'c_FK_wrist_jnt', p = (14, 0, 0))
+cmds.joint(n = 'c_FK_wristEnd_jnt', p = (15, 0, 0))
+cmds.select(d=True)
+
+# Creating the IK handle
+
+cmds.ikHandle(n = 'c_arm_ikHandle', sj = 'c_IK_shoulder_jnt', ee = 'c_IK_wrist_jnt', sol = 'ikRPsolver')
+
+# Creating the IK Arm Control
+
+ikControl = cmds.circle(n = 'ctrl_IK_arm', nr = (1,0,0))
+ikGroup = cmds.group(ikControl, n = str(ikControl[0]) + '_grp')
+# Query wrist location and rotation
+pos = cmds.xform('c_IK_wrist_jnt', q=True, t=True)
+rot = cmds.xform('c_IK_wrist_jnt', q=True, ro=True)
+
+# Snap the group to the wrist joint
+cmds.xform(ikGroup, t=pos, ws=True)
+cmds.xform(ikGroup, ro=rot, ws=True)
+
+# Constrain the handle to the control
+
+cmds.pointConstraint(ikControl, 'c_IK_wrist_jnt', mo=True)
