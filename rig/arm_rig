@@ -1,42 +1,51 @@
 import maya.cmds as cmds
 
-# Creating the Target Joint chain
-cmds.joint(n = 'c_shoulder_jnt', p = (0, 0, 0))
-cmds.joint(n = 'c_elbow_jnt', p = (7, 0, -1))
-cmds.joint(n = 'c_wrist_jnt', p = (14, 0, 0))
-cmds.joint(n = 'c_wristEnd_jnt', p = (15, 0, 0))
-cmds.select(d=True)
+chainTypes = ('IK', 'FK', 'TG')
 
-# Creating the IK Joint chain
-cmds.joint(n = 'c_IK_shoulder_jnt', p = (0, 0, 0))
-cmds.joint(n = 'c_IK_elbow_jnt', p = (7, 0, -1))
-cmds.joint(n = 'c_IK_wrist_jnt', p = (14, 0, 0))
-cmds.joint(n = 'c_IK_wristEnd_jnt', p = (15, 0, 0))
-cmds.select(d=True)
+# Creating the Joint chains
+for c in chainTypes:
+    cmds.joint(n = 'c_' + c + '_shoulder_jnt', p = [0, 0, 0])
+    cmds.joint(n = 'c_' + c + '_elbow_jnt', p = [7, 0, -1])
+    cmds.joint('c_' + str(c) + '_shoulder_jnt', e = True, zso = True, oj = 'xyz', sao = 'yup')
+    cmds.joint(n = 'c_' + c + '_wrist_jnt', p = [14, 0, 0])
+    cmds.joint('c_' + str(c) + '_elbow_jnt', e = True, zso = True, oj = 'xyz', sao = 'yup')
+    cmds.joint(n = 'c_' + c + '_wristEnd_jnt', p = [15, 0, 0])
+    cmds.joint('c_' + str(c) + '_wrist_jnt', e = True, zso = True, oj = 'xyz', sao = 'yup')
+    cmds.select(d=True)
 
-# Creating the FK Joint chain
-cmds.joint(n = 'c_FK_shoulder_jnt', p = (0, 0, 0))
-cmds.joint(n = 'c_FK_elbow_jnt', p = (7, 0, -1))
-cmds.joint(n = 'c_FK_wrist_jnt', p = (14, 0, 0))
-cmds.joint(n = 'c_FK_wristEnd_jnt', p = (15, 0, 0))
-cmds.select(d=True)
 
 # Creating the IK handle
 
-cmds.ikHandle(n = 'c_arm_ikHandle', sj = 'c_IK_shoulder_jnt', ee = 'c_IK_wrist_jnt', sol = 'ikRPsolver')
+ikH = cmds.ikHandle( sj='c_IK_shoulder_jnt', ee='c_IK_wrist_jnt', p=2, w=.5 )
 
 # Creating the IK Arm Control
 
 ikControl = cmds.circle(n = 'ctrl_IK_arm', nr = (1,0,0))
 ikGroup = cmds.group(ikControl, n = str(ikControl[0]) + '_grp')
 # Query wrist location and rotation
-pos = cmds.xform('c_IK_wrist_jnt', q=True, t=True)
-rot = cmds.xform('c_IK_wrist_jnt', q=True, ro=True)
+pos = cmds.xform('c_IK_wrist_jnt', ws = True, q=True, t=True)
+rot = cmds.xform('c_IK_wrist_jnt', ws = True, q=True, ro=True)
 
 # Snap the group to the wrist joint
 cmds.xform(ikGroup, t=pos, ws=True)
 cmds.xform(ikGroup, ro=rot, ws=True)
 
-# Constrain the handle to the control
+# Constrain the handle to the control, and the control to the wrist rotation
 
-cmds.pointConstraint(ikControl, 'c_IK_wrist_jnt', mo=True)
+cmds.pointConstraint(ikControl, ikH[0], mo=True)
+cmds.orientConstraint(ikControl, 'c_IK_wrist_jnt', mo=True)
+
+# Creating and Positioning PV
+# Query shoulder position
+sPos = cmds.xform('c_IK_shoulder_jnt', q = True, ws = True, t = True)
+# Create the control
+poleVector = cmds.circle(n = 'ctrl_PV_arm', nr = (0,0,1))
+pvGroup = cmds.group(poleVector, n = str(poleVector[0]) + '_grp')
+
+#Calculate the elbow spot and position it behind
+midpoint = (pos[0] + sPos[0])/2
+
+cmds.move(midpoint, 0, -3, pvGroup)
+
+# Create PV Constraint
+cmds.poleVectorConstraint(poleVector, ikH[0])
