@@ -7,10 +7,58 @@ import maya.cmds as cmds
 # I can have non-standard proportions- kind of like how the AS rig does it, I guess.
 
 armjntList = (['shoulder', [0,0,0]], ['elbow', [-48,12,0]], ['wrist', [-96,0,0]], ['wristEnd', [-108,0,0]])
+digitLocationList = ( [-113, -6, 0], [-110, -6, 0], [-110, -6, 0], [-110, -6, 0])
 # these are the other joints I want to add in as well, but I want to make sure I can get the main bit working first.
     # 'digit1_1','digit1_2','digit1_3','digit1_end',
     # 'digit2_1','digit2_2','digit2_3','digit2_end', 'digit3_1','digit3_2','digit3_3','digit3_end',
     # 'cup', 'digit4_1','digit4_2','digit4_3','digit4_end', 'digit5_1','digit5_2','digit5_3','digit5_end']
+
+#below gives me all the nest numbers I need for digit names :D
+"""for i in range(5):
+    j=1
+    while j<=4:
+        print 'makes joint ' + str(j) + ' of digit ' + str(i+1)
+        j = j+1"""
+
+#this gives me all the joints, properly named for digits. wrong place, though
+"""for i in range(5):
+    j=1
+    while j<=4:
+        cmds.joint(n='digit'+ str(i + 1) + '_' + str(j) + '_jnt', p = ((-2 * i)+2, (-4 * j) - 2, 0))
+        j = j+1
+cmds.select('digit*_1_jnt')
+cmds.parent(w=True)
+cmds.select(d=True)"""
+#it does spit out a warning about digit 1-1 already being parented to worldspace, but it works for now.
+
+#this is the one for a basehand!
+for i in range(5):
+    j=1
+    while j<=4:
+        cmds.joint(n='digit'+ str(i + 1) + '_' + str(j) + '_jnt', p = ((-4 * j) - 108, (3 * i) - 6 , 0))
+        j = j+1
+cmds.select('digit*_1_jnt')
+cmds.parent(w=True)
+cmds.select(d=True)
+
+#for proper positions
+cmds.setAttr('digit1_1_jnt.tx', -104)
+cmds.setAttr('digit2_1_jnt.tx', -112)
+cmds.setAttr('digit3_1_jnt.tx', -113)
+cmds.setAttr('digit4_1_jnt.tx', -112)
+cmds.setAttr('digit5_1_jnt.tx', -109)
+
+#make cup jnt
+cmds.joint(n='cup_jnt', p = (-106, 4 , 0))
+
+#create hierarchy
+cmds.select('digit4_1_jnt', 'digit5_1_jnt', 'cup_jnt')
+cmds.parent()
+cmds.select('digit1_1_jnt', 'digit2_1_jnt','digit3_1_jnt', 'cup_jnt', '*wrist_jnt')
+cmds.parent()
+
+
+
 print armjntList
 armXlist = ([])
 #make the base joint chain
@@ -85,7 +133,8 @@ cmds.delete(OC_ikwrist)
 cmds.ikHandle( n='ikh_arm', sj='ik_shoulder_jnt', ee='ik_wrist_jnt', w=1, sol='ikRPsolver')
 cmds.poleVectorConstraint( 'ctl_ik_ElbowAim', 'ikh_arm' )
 cmds.parent( 'ikh_arm', 'ctl_ik_Arm' )
-
+#I do this one 'cause I find a double wrist IK allows for a smooth IK handle and freedom with actual hand rotation.
+cmds.parentConstraint('ctl_ik_Arm','IK_wristEnd_jnt')
 
 #----- FK CONTROL SET -----#
 #create FK controllers and move to location

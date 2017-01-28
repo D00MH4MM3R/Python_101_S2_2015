@@ -1,11 +1,36 @@
 import maya.cmds as cmds
 
 #----- CREATE ARM SKELETON -----#
-armjntList = (['shoulder', [0,0,0]], ['elbow', [-48,12,0]], ['wrist', [-96,0,0]], ['wristEnd', [-108,0,0]])
+armjntList = (['shoulder', [0,0,0]], ['elbow', [-48,12,0]], ['wrist', [-96,0,0]], ['wristEnd', [-96.25,0,0]])
 
 #make the base joint chain
 for item in armjntList:
     cmds.joint(n= 'rig_' + item[0] + '_jnt', p= item[1])
+cmds.select(d=True)
+
+#base hand, 5 fingers
+for i in range(5):
+    j=1
+    while j<=4:
+        cmds.joint(n='rig_digit'+ str(i + 1) + '_' + str(j) + '_jnt', p = ((-4 * j) - 108, (3 * i) - 6 , 0))
+        j = j+1
+cmds.select('rig_digit*_1_jnt')
+cmds.parent(w=True)
+cmds.select(d=True)
+
+#--for proper positions
+cmds.setAttr('rig_digit1_1_jnt.tx', -104)
+cmds.setAttr('rig_digit2_1_jnt.tx', -112)
+cmds.setAttr('rig_digit3_1_jnt.tx', -113)
+cmds.setAttr('rig_digit4_1_jnt.tx', -112)
+cmds.setAttr('rig_digit5_1_jnt.tx', -109)
+#--make cup jnt
+cmds.joint(n='rig_cup_jnt', p = (-106, 4 , 0))
+#--create hierarchy
+cmds.select('rig_digit4_1_jnt', 'rig_digit5_1_jnt', 'rig_cup_jnt')
+cmds.parent()
+cmds.select('rig_digit1_1_jnt', 'rig_digit2_1_jnt','rig_digit3_1_jnt', 'rig_cup_jnt', 'rig_wristEnd_jnt')
+cmds.parent()
 cmds.select(d=True)
 
 #make the IK joint chain
@@ -44,6 +69,9 @@ cmds.delete(OC_ikwrist)
 cmds.ikHandle( n='ikh_arm', sj='IK_shoulder_jnt', ee='IK_wrist_jnt', w=1, sol='ikRPsolver')
 cmds.poleVectorConstraint( 'ctl_ik_ElbowAim', 'ikh_arm' )
 cmds.parent( 'ikh_arm', 'ctl_ik_Arm' )
+#I use a double IK wrist- one for the end effector and one to transfer actual wrist rotations.
+#Does anyone else do this or am I on my own? How do others tackle that?
+cmds.parentConstraint('ctl_ik_Arm','IK_wristEnd_jnt')
 
 
 #----- FK CONTROL SET -----#
