@@ -143,17 +143,74 @@ cmds.setAttr('|grp_ctl_IKFK_Switch|ctl_IKFK_Switch.IK_to_FK_Switch', keyable = T
 
 
 #key parent weights to switch
-#set fk keys
-cmds.setAttr('rig_wristEnd_jnt_parentConstraint1.ik_wristEnd_jntW1', [0])
+#at = attribute, cd = current driver
+#set the weights to FK active
+"""
+#wrist
+cmds.setAttr('rig_wrist_jnt_parentConstraint1.IK_wrist_jntW1', 0)
+cmds.setDrivenKeyframe('rig_wrist_jnt_parentConstraint1.FK_wrist_jntW0' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
+cmds.setDrivenKeyframe('rig_wrist_jnt_parentConstraint1.IK_wrist_jntW1' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
+#elbow
+cmds.setAttr('rig_elbow_jnt_parentConstraint1.IK_elbow_jntW1', 0)
+cmds.setDrivenKeyframe('rig_elbow_jnt_parentConstraint1.FK_elbow_jntW0' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
+cmds.setDrivenKeyframe('rig_elbow_jnt_parentConstraint1.IK_elbow_jntW1' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
+#shoulder
+cmds.setAttr('rig_shoulder_jnt_parentConstraint1.IK_shoulder_jntW1', 0)
+cmds.setDrivenKeyframe('rig_shoulder_jnt_parentConstraint1.FK_shoulder_jntW0' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
+cmds.setDrivenKeyframe('rig_shoulder_jnt_parentConstraint1.IK_shoulder_jntW1' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
 
-# Set an entire list of multi-attribute values in one command
-cmds.setAttr( 'rig_wristEnd_jnt_parentConstraint1.ik_wristEnd_jntW1', 0)
+#-set the weights to FK active-#
+cmds.setAttr('ctl_IKFK_Switch.IK_to_FK_Switch', 0)
+#wrist
+cmds.setAttr('rig_wrist_jnt_parentConstraint1.FK_wrist_jntW0', 1)
+cmds.setAttr('rig_wrist_jnt_parentConstraint1.IK_wrist_jntW1', 0)
+cmds.setDrivenKeyframe('rig_wrist_jnt_parentConstraint1.FK_wrist_jntW0' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
+cmds.setDrivenKeyframe('rig_wrist_jnt_parentConstraint1.IK_wrist_jntW1' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
+#elbow
+cmds.setAttr('rig_wrist_jnt_parentConstraint1.FK_elbow_jntW0', 1)
+cmds.setAttr('rig_elbow_jnt_parentConstraint1.IK_elbow_jntW1', 0)
+cmds.setDrivenKeyframe('rig_elbow_jnt_parentConstraint1.FK_elbow_jntW0' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
+cmds.setDrivenKeyframe('rig_elbow_jnt_parentConstraint1.IK_elbow_jntW1' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
+#shoulder
+cmds.setAttr('rig_shoulder_jnt_parentConstraint1.FK_shoulder_jntW0', 1)
+cmds.setAttr('rig_shoulder_jnt_parentConstraint1.IK_shoulder_jntW1', 0)
+cmds.setDrivenKeyframe('rig_shoulder_jnt_parentConstraint1.FK_shoulder_jntW0' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
+cmds.setDrivenKeyframe('rig_shoulder_jnt_parentConstraint1.IK_shoulder_jntW1' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
 
-#there's something wrong with this next bit. not sure how I need to enter the data... both versions have the same error.
-#   --> Error: line 1: TypeError: file <maya console> line 1: Flag 'driven' must be passed a boolean argument
-#cmds.setDrivenKeyframe(currentDriver = 'ctl_IKFK_Switch.IK_to_FK_Switch', driven = 'rig_wristEnd_jnt_parentConstraint1.fk_wristEnd_jntW0')
-#cmds.setDrivenKeyframe(currentDriver = 'ctl_IKFK_Switch.IK_to_FK_Switch', 'rig_wristEnd_jnt_parentConstraint1.ik_wristEnd_jntW1')
+#-set the weights to IK active-#
+cmds.setAttr('ctl_IKFK_Switch.IK_to_FK_Switch', 10)
+#wrist
+cmds.setAttr('rig_wrist_jnt_parentConstraint1.FK_wrist_jntW0', 0)
+cmds.setAttr('rig_wrist_jnt_parentConstraint1.IK_wrist_jntW1', 1)
+cmds.setDrivenKeyframe('rig_wrist_jnt_parentConstraint1.FK_wrist_jntW0' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
+cmds.setDrivenKeyframe('rig_wrist_jnt_parentConstraint1.IK_wrist_jntW1' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
+#elbow
+cmds.setAttr('rig_elbow_jnt_parentConstraint1.FK_elbow_jntW0', 0)
+cmds.setAttr('rig_elbow_jnt_parentConstraint1.IK_elbow_jntW1', 1)
+cmds.setDrivenKeyframe('rig_elbow_jnt_parentConstraint1.FK_elbow_jntW0' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
+cmds.setDrivenKeyframe('rig_elbow_jnt_parentConstraint1.IK_elbow_jntW1' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
+#shoulder
+cmds.setAttr('rig_shoulder_jnt_parentConstraint1.FK_shoulder_jntW0', 0)
+cmds.setAttr('rig_shoulder_jnt_parentConstraint1.IK_shoulder_jntW1', 1)
+cmds.setDrivenKeyframe('rig_shoulder_jnt_parentConstraint1.FK_shoulder_jntW0' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
+cmds.setDrivenKeyframe('rig_shoulder_jnt_parentConstraint1.IK_shoulder_jntW1' , cd = 'ctl_IKFK_Switch.IK_to_FK_Switch')
+#YESSSSS IT WORKS!!!! now to see about simplifying.
+"""
 
-#grabbed from MEL output
-#setDrivenKeyframe -currentDriver ctl_IKFK_Switch.IK_to_FK_Switch rig_wristEnd_jnt_parentConstraint1.fk_wristEnd_jntW0;
-#setDrivenKeyframe -currentDriver ctl_IKFK_Switch.IK_to_FK_Switch rig_wristEnd_jnt_parentConstraint1.ik_wristEnd_jntW1;
+#FK first
+cmds.setAttr('ctl_IKFK_Switch.IK_to_FK_Switch', 0)
+for each in armjntList:
+    cmds.setAttr('rig_' + each[0] +'_jnt_parentConstraint1.FK_' + each[0] +'_jntW0', 1)
+    cmds.setAttr('rig_' + each[0] +'_jnt_parentConstraint1.IK_' + each[0] +'_jntW1', 0)
+    cmds.setDrivenKeyframe('rig_' + each[0] +'_jnt_parentConstraint1.FK_' + each[0] +'_jntW0', cd='ctl_IKFK_Switch.IK_to_FK_Switch')
+    cmds.setDrivenKeyframe('rig_' + each[0] +'_jnt_parentConstraint1.IK_' + each[0] +'_jntW1', cd='ctl_IKFK_Switch.IK_to_FK_Switch')
+
+#now IK
+cmds.setAttr('ctl_IKFK_Switch.IK_to_FK_Switch', 10)
+for each in armjntList:
+    cmds.setAttr('rig_' + each[0] +'_jnt_parentConstraint1.FK_' + each[0] +'_jntW0', 0)
+    cmds.setAttr('rig_' + each[0] +'_jnt_parentConstraint1.IK_' + each[0] +'_jntW1', 1)
+    cmds.setDrivenKeyframe('rig_' + each[0] +'_jnt_parentConstraint1.FK_' + each[0] +'_jntW0', cd='ctl_IKFK_Switch.IK_to_FK_Switch')
+    cmds.setDrivenKeyframe('rig_' + each[0] +'_jnt_parentConstraint1.IK_' + each[0] +'_jntW1', cd='ctl_IKFK_Switch.IK_to_FK_Switch')
+#yep! this works!
+

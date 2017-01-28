@@ -66,11 +66,6 @@ cmds.parentConstraint('ctl_fk_shoulder', 'FK_shoulder_jnt')
 cmds.parentConstraint('ctl_fk_elbow', 'FK_elbow_jnt')
 cmds.parentConstraint('ctl_fk_wrist', 'FK_wrist_jnt')
 
-#remove Ends
-cmds.select('*End*')
-cmds.delete()
-cmds.select(d=True)
-
 #----- IKFK SWITCH -----#
 # create controller switch
 cmds.circle( n='ctl_IKFK_Switch', r=(20), nr=(0, 1, 0), c=(0, 0, 0) )
@@ -82,20 +77,20 @@ cmds.select('ctl_IKFK_Switch')
 cmds.addAttr(longName='IK_to_FK_Switch', attributeType='double', min= 0, max= 10, defaultValue= 0 )
 cmds.setAttr('|grp_ctl_IKFK_Switch|ctl_IKFK_Switch.IK_to_FK_Switch', keyable = True)
 
-
-
 #key parent weights to switch
-#set fk keys
-#cmds.setAttr('rig_wristEnd_jnt_parentConstraint1.ik_wristEnd_jntW1', [0])
+#key FK
+cmds.setAttr('ctl_IKFK_Switch.IK_to_FK_Switch', 0)
+for each in armjntList:
+    cmds.setAttr('rig_' + each[0] +'_jnt_parentConstraint1.FK_' + each[0] +'_jntW0', 1)
+    cmds.setAttr('rig_' + each[0] +'_jnt_parentConstraint1.IK_' + each[0] +'_jntW1', 0)
+    cmds.setDrivenKeyframe('rig_' + each[0] +'_jnt_parentConstraint1.FK_' + each[0] +'_jntW0', cd='ctl_IKFK_Switch.IK_to_FK_Switch')
+    cmds.setDrivenKeyframe('rig_' + each[0] +'_jnt_parentConstraint1.IK_' + each[0] +'_jntW1', cd='ctl_IKFK_Switch.IK_to_FK_Switch')
 
-# Set an entire list of multi-attribute values in one command
-#cmds.setAttr( 'rig_wristEnd_jnt_parentConstraint1.ik_wristEnd_jntW1', 0)
+#key IK
+cmds.setAttr('ctl_IKFK_Switch.IK_to_FK_Switch', 10)
+for each in armjntList:
+    cmds.setAttr('rig_' + each[0] +'_jnt_parentConstraint1.FK_' + each[0] +'_jntW0', 0)
+    cmds.setAttr('rig_' + each[0] +'_jnt_parentConstraint1.IK_' + each[0] +'_jntW1', 1)
+    cmds.setDrivenKeyframe('rig_' + each[0] +'_jnt_parentConstraint1.FK_' + each[0] +'_jntW0', cd='ctl_IKFK_Switch.IK_to_FK_Switch')
+    cmds.setDrivenKeyframe('rig_' + each[0] +'_jnt_parentConstraint1.IK_' + each[0] +'_jntW1', cd='ctl_IKFK_Switch.IK_to_FK_Switch')
 
-#there's something wrong with this next bit. not sure how I need to enter the data... both versions have the same error.
-#   --> Error: line 1: TypeError: file <maya console> line 1: Flag 'driven' must be passed a boolean argument
-#cmds.setDrivenKeyframe(currentDriver = 'ctl_IKFK_Switch.IK_to_FK_Switch', driven = 'rig_wristEnd_jnt_parentConstraint1.fk_wristEnd_jntW0')
-#cmds.setDrivenKeyframe(currentDriver = 'ctl_IKFK_Switch.IK_to_FK_Switch', 'rig_wristEnd_jnt_parentConstraint1.ik_wristEnd_jntW1')
-
-#grabbed from MEL output
-#setDrivenKeyframe -currentDriver ctl_IKFK_Switch.IK_to_FK_Switch rig_wristEnd_jnt_parentConstraint1.fk_wristEnd_jntW0;
-#setDrivenKeyframe -currentDriver ctl_IKFK_Switch.IK_to_FK_Switch rig_wristEnd_jnt_parentConstraint1.ik_wristEnd_jntW1;
