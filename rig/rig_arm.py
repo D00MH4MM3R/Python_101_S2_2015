@@ -21,8 +21,9 @@ def CreateIKController(handleName='', startJoint='', endJoint='', solverType='ik
     ikEndJoint = str('ik_' + endJoint + '_jnt')
     ikGroup = str('grp_ctrl_ik' + endJoint.capitalize())
     ikControl = str('ctrl_ik' + endJoint.capitalize())
+    ikHandleName = str('ikh_' + handleName)
 
-    cmds.ikHandle(n=handleName, sj=ikStartJoint, ee=ikEndJoint, sol=solverType, p=2, w=1)
+    cmds.ikHandle(n=ikHandleName, sj=ikStartJoint, ee=ikEndJoint, sol=solverType, p=2, w=1)
     # Create IK Control
     pos = cmds.xform(ikEndJoint, q=True, t=True, ws=True)
     cmds.group(em=True, name=ikGroup)
@@ -32,7 +33,7 @@ def CreateIKController(handleName='', startJoint='', endJoint='', solverType='ik
 
     cmds.parent(ikControl, ikGroup)
     cmds.xform(ikGroup, t=pos, ws=True)
-    cmds.parent(handleName, ikControl)
+    cmds.parent(ikHandleName, ikControl)
 
 
 def CreatePoleVector(handleName='', alignmentJoint=''):
@@ -43,7 +44,7 @@ def CreatePoleVector(handleName='', alignmentJoint=''):
     '''
     alignJointName = str("ik_" + alignmentJoint + "_jnt")
     #pvGroup = str('grp_ctrl_pv' + handleName.replace('ikh',''))
-    pvControl = str('ctrl_pv_' + handleName.replace('ikh_',''))
+    pvControl = str('ctrl_pv_' + handleName)
 
     pos = cmds.xform(alignJointName, q=True, t=True, ws=True)
     #cmds.group(em=True, name=pvGroup)
@@ -116,7 +117,7 @@ def SetControllerColor(controlName=None, rgb=None):
             # set RGB color
             cmds.setAttr(controlName + ".overrideColorRGB", r, g, b)
         else:
-            print "Missing an RGB list - continue with defualts"
+            print "Missing an RGB list - continue with defaults"
     else:
         print "Missing a control name to set color - moving on"
 
@@ -134,8 +135,8 @@ for pfx in _jointData['prefix']:
         cmds.joint(n=jointName, p=jointPos)
 
     if pfx == 'ik':
-        CreateIKController(handleName='ikh_arm', startJoint='shoulder', endJoint='wrist')
-        CreatePoleVector(handleName='ikh_arm', alignmentJoint='elbow')
+        CreateIKController(handleName='arm', startJoint='shoulder', endJoint='wrist')
+        CreatePoleVector(handleName='arm', alignmentJoint='elbow')
     elif pfx == 'fk':
         CreateFKController(_jointData['names'])
     else:
