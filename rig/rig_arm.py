@@ -45,6 +45,7 @@ def CreatePoleVector(handleName='', alignmentJoint=''):
     alignJointName = str("ik_" + alignmentJoint + "_jnt")
     #pvGroup = str('grp_ctrl_pv' + handleName.replace('ikh',''))
     pvControl = str('ctrl_pv_' + handleName)
+    t_handleName = str('ikh_' + handleName)
 
     pos = cmds.xform(alignJointName, q=True, t=True, ws=True)
     #cmds.group(em=True, name=pvGroup)
@@ -61,7 +62,7 @@ def CreatePoleVector(handleName='', alignmentJoint=''):
     #cmds.xform(pvGroup, t=pos, ws=True)
 
     # make a pole vector
-    cmds.poleVectorConstraint(pvControl, handleName, w=1.0)
+    cmds.poleVectorConstraint(pvControl, t_handleName, w=1.0)
 
 
 def CreateFKController(joints=None):
@@ -106,8 +107,8 @@ def AttachToBaseRig(joints=None):
         print "Joint List must contain at least ONE entry - are you sure you're passing in the right list?"
 
 def SetControllerColor(controlName=None, rgb=None):
-    if controlName != None:
-        if rgb != None:
+    if controlName:
+        if rgb:
             r = rgb[0]
             g = rgb[1]
             b = rgb[2]
