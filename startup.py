@@ -1,22 +1,9 @@
 import maya.cmds as cmds
-import os
-import system.utils as utils
-reload(utils)
-
-print "Startup"
-
-# Change the current time unit to ntsc
-cmds.currentUnit( time='ntsc' )
-
-# Change the current linear unit to inches
-cmds.currentUnit( linear='cm' )
-
-# Set a system path to files.  We can do this with the os module
-os.environ["RDOJO_DATA"] = 'C:/Users/Griffy/Documents/GitHub/Python_101_S2_2015/'
-
-
-import ui.ui as ui
+print 'Startup functional'
+#change time to ntsc because 30fps for games
+cmds.currentUnit(time='ntsc')
+#and units to cm on the off chance they weren't
+cmds.currentUnit(linear='cm')
+#import ui.py for tool menu
+import kcUI.ui as ui
 reload(ui)
-ui.RDojo_UI()
-
-utils.setupMatchScripts()
