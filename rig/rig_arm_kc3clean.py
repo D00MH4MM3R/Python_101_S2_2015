@@ -122,43 +122,6 @@ def handjoint(fingers, joints):
 #build a hand
 handjoint(5,4)
 
-"""    this works as expected - test code for running finger/control generation with variable input
-n = 0
-for item in handjntList:
-    f = n + 1
-    if f >= cupped and item[0] == 'digit' + str(f) + '_1':
-        print item[0] + ' is cupped'
-        n = n + 1
-    elif f < cupped and item[0] == 'digit' + str(f) + '_1':
-        print item[0] + ' is seperate'
-        n = n + 1
-    elif item[0] == 'cup':
-        print item[0] + ' is the cup'
-        n = n + 1"""
-
-""""#--for proper positions (up to 5 fingers) This will be done manually (no pun intended) for now.
-#this moves the base joints to a more sensible location and updates handjntList with the new locations of
-#the joint chains for adding controls later. I only built fingers for the rig skele, so I'm only running this once.
-for i in range(len(handjntList)):
-    if handjntList[i][0] == 'digit1_1':
-        cmds.setAttr('rig_digit1_1_jnt.tx', -104)
-        handjntList[i][1] = cmds.xform('rig_digit1_1_jnt', q=True, t=True, ws=True)
-    elif handjntList[i][0] == 'digit2_1':
-        cmds.setAttr('rig_digit2_1_jnt.tx', -112)
-        handjntList[i][1] = cmds.xform('rig_digit2_1_jnt', q=True, t=True, ws=True)
-    elif handjntList[i][0] == 'digit3_1':
-        cmds.setAttr('rig_digit3_1_jnt.tx', -113)
-        handjntList[i][1] = cmds.xform('rig_digit3_1_jnt', q=True, t=True, ws=True)
-    elif handjntList[i][0] == 'digit4_1':
-        cmds.setAttr('rig_digit4_1_jnt.tx', -112)
-        handjntList[i][1] = cmds.xform('rig_digit4_1_jnt', q=True, t=True, ws=True)
-    elif handjntList[i][0] == 'digit5_1':
-        cmds.setAttr('rig_digit5_1_jnt.tx', -109)
-        handjntList[i][1] = cmds.xform('rig_digit5_1_jnt', q=True, t=True, ws=True)
-    elif handjntList[i][0] != 'digit*_1':
-        handjntList[i][1] = cmds.xform('rig_' + handjntList[i][0] + '_jnt', q=True, t=True, ws=True)
-"""
-
 #-----BUILD ARM CONTROL SETS-----#
 # This function is absurdly large, but it'll do my FK and IK.
 # I really wish I had 2016 colors to choose from. Later, I'll have the colors based on what side the limb is on.
@@ -238,11 +201,9 @@ def setkeyIKFK(jointlist, fkval, ikval):
                                cd='ctl_IKFK_Switch.IK_to_FK_Switch')
         cmds.setDrivenKeyframe('rig_' + each[0] + '_jnt_parentConstraint1.ik_' + each[0] + '_jntW1',
                                cd='ctl_IKFK_Switch.IK_to_FK_Switch')
-
 # key IK
 cmds.setAttr('ctl_IKFK_Switch.IK_to_FK_Switch', 10)
 setkeyIKFK(armjntList, 0, 1)
 #key FK
 cmds.setAttr('ctl_IKFK_Switch.IK_to_FK_Switch', 0)
 setkeyIKFK(armjntList, 1, 0)
-

@@ -192,7 +192,3 @@ for item in handjntList:
 # get rid of end controls (can't get it to skip over them right now without breaking the hierarchy builder)
 cmds.select('grp_ctl_digit*_4')
 cmds.delete()
-
-
-
-
