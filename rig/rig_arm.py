@@ -248,12 +248,12 @@ class RiggingToolUi(QtGui.QDialog):
         # Delete UI on close to avoid winEvent error
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
 
-        self.create_layout()
-        self.create_connections()
-
         jsonFilePath = os.path.join(os.environ['RIGGING_TOOL'], 'layout', 'layout.json')
         self.jsonData = utils.readJson(jsonFilePath)
         self.projectRigData = self.jsonData['default']
+
+        self.create_layout()
+        self.create_connections()
 
         self.classyArm = RigArm()
 
@@ -264,9 +264,36 @@ class RiggingToolUi(QtGui.QDialog):
         self.btn_saveLocatorsAsJson = QtGui.QPushButton("Save LOCATORS as JSON")
         self.btn_thisDoesNothing = QtGui.QPushButton("This Button Does Nothing")
 
+        self.lbl_projectsDrop = QtGui.QLabel("Project")
+        self.dropDown_projects = QtGui.QComboBox()
+        for k, v in self.jsonData.iteritems():
+            self.dropDown_projects.addItem(k)
+            #print k, v
+
+        self.lbl_rigsDrop = QtGui.QLabel("Rigs")
+        self.dropDown_rigs = QtGui.QComboBox()
+        for k, v in self.jsonData.iteritems():
+            self.dropDown_rigs.addItem(k)
+            #print v
+
         main_layout = QtGui.QVBoxLayout()
+
+        project_dropDown_layout = QtGui.QHBoxLayout()
+        project_dropDown_layout.addWidget(self.lbl_projectsDrop)
+        project_dropDown_layout.addWidget(self.dropDown_projects)
+        project_dropDown_layout.setStretch(0, 1)
+        project_dropDown_layout.setStretch(1, 2)
+
+        rigs_dropDown_layout = QtGui.QHBoxLayout()
+        rigs_dropDown_layout.addWidget(self.lbl_rigsDrop)
+        rigs_dropDown_layout.addWidget(self.dropDown_rigs)
+        rigs_dropDown_layout.setStretch(0, 1)
+        rigs_dropDown_layout.setStretch(1, 2)
+
         main_layout.setContentsMargins(2, 2, 2, 2)
         main_layout.setSpacing(5)
+        main_layout.addLayout(project_dropDown_layout)
+        main_layout.addLayout(rigs_dropDown_layout)
         main_layout.addWidget(self.btn_rigFromJson)
         main_layout.addWidget(self.btn_rigFromLocators)
         main_layout.addWidget(self.btn_saveLocatorsAsJson)

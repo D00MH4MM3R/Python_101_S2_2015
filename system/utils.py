@@ -10,3 +10,44 @@ def readJson(fileName):
     with open(fileName, 'r') as inFile:
         data = (open(inFile.name, 'r').read())
     return json.loads(data)
+
+
+def SaveCustomShape(shapeName=None, debug=False):
+    # number of CVs = degree + spans.
+    # degs = cmds.getAttr( 'CTRL_Pocket_Master.degree' )
+    # spans = cmds.getAttr( 'CTRL_Pocket_Master.spans' )
+    if shapeName == None:
+        shapeName = cmds.ls(sl=True)[0]
+    cvCount = cmds.getAttr(shapeName + '.cp', s=1)
+    cvPos = []
+    for i in range(0, cvCount):
+        cp = cmds.select(shapeName + '.cv[' + str(i) + ']')
+        p = cmds.xform(cp, q=True, t=True, ws=True)
+        cvPos.append(p)
+
+    # write to CustomShapes.json:
+    # { "shapeName": [cvPos, cvPos, cvPos] }
+    if debug:
+        return cvPos
+
+
+def CreateCustomShape(shapeName=None, cvPositions=[]):
+    # load Resources/CustomShapes.json
+    # check for shapeName in keys
+    # if found:
+    # shapesJson = {}
+    if shapeName:  # and shapesJson:
+        # Create Curve
+        cmds.curve(n=shapeName, p=cvPositions)
+
+        # Get Some Renaming Done
+        cmds.select(shapeName, r=True)
+        all = cmds.ls(sl=True, dag=True, shapes=True)
+        for shape in all:
+            cmds.rename(shape, "{0}Shape".format(cmds.listRelatives(shape, parent=True)[0]))
+    else:
+        print "FAILED TO CREATE CUSTOM SHAPE"
+# del temp
+# temp = None
+# temp = SaveCustomShape()
+# CreateCustomShape(shapeName="ctrl_control_name", cvPositions=temp)
