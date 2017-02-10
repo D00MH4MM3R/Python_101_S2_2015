@@ -8,42 +8,51 @@
 # TODO : Find elegant solution for mirror axis
 # TODO : Setup RvL control colours for each type, e.g. 'ctrl_colors': { 'fk_right': [0,1,0], 'fk_left': [1,0,0] }, etc.
 # TODO : Final Cleanup Phase of parenting full groups; RIGHT_ARM -> SPINE <- LEFT_ARM, etc.
+
+from PySide import QtCore
+from PySide import QtGui
+from shiboken import wrapInstance
+import maya.OpenMayaUI as omui
 import maya.cmds as cmds
-'''
 import system.utils as utils
 import os
 
+print "We Have Imported RIG_ARM"
+
+'''
 # declare a data structure, fill it with useful information
 _jointData = {
-    'prefix': ['ik', 'fk', 'rig'],
-    'mirrorName': ['R', 'L'],
-    'mirrorAxis': 'x',
-    'chains': {
-        'arm': {
-            'use_mirror': True,
-            'use_ik': True,
-            'use_fk': True,
-            'ctrl_alignment': (1, 0, 0),
-            'offset_value': 3.0,
-            'joints': [
-                {'name': 'shoulder', 'position': [4.0, 13.0, 0.0]},
-                {'name': 'elbow', 'position': [7.0, 13.0, -1.5]},
-                {'name': 'wrist', 'position': [10.0, 13.0, 0.0]},
-                {'name': 'wristEnd', 'position': [10.5, 13.0, 0.0]}
-            ]
-        },
-        'leg': {
-            'use_mirror': True,
-            'use_ik': True,
-            'use_fk': True,
-            'offset_value': -3.0,
-            'ctrl_alignment': (0, 1, 0),
-            'joints': [
-                {'name': 'hip', 'position': [1.5, 7.5, 0.0]},
-                {'name': 'upper', 'position': [2.5, 6.0, 0.0]},
-                {'name': 'lower', 'position': [2.5, 3.0, 1.5]},
-                {'name': 'foot', 'position': [2.5, 0.0, 0.0]}
-            ]
+    'default': {
+        'prefix': ['ik', 'fk', 'rig'],
+        'mirrorName': ['R', 'L'],
+        'mirrorAxis': 'x',
+        'chains': {
+            'arm': {
+                'use_mirror': True,
+                'use_ik': True,
+                'use_fk': True,
+                'ctrl_alignment': (1, 0, 0),
+                'offset_value': 3.0,
+                'joints': [
+                    {'name': 'shoulder', 'position': [4.0, 13.0, 0.0]},
+                    {'name': 'elbow', 'position': [7.0, 13.0, -1.5]},
+                    {'name': 'wrist', 'position': [10.0, 13.0, 0.0]},
+                    {'name': 'wristEnd', 'position': [10.5, 13.0, 0.0]}
+                ]
+            },
+            'leg': {
+                'use_mirror': True,
+                'use_ik': True,
+                'use_fk': True,
+                'offset_value': -3.0,
+                'ctrl_alignment': (0, 1, 0),
+                'joints': [
+                    {'name': 'hip', 'position': [1.5, 7.5, 0.0]},
+                    {'name': 'upper', 'position': [2.5, 6.0, 0.0]},
+                    {'name': 'lower', 'position': [2.5, 3.0, 1.5]},
+                    {'name': 'foot', 'position': [2.5, 0.0, 0.0]}
+                ]
+            }
         }
     }
 }
@@ -144,9 +153,6 @@ class RigArm(object):
         cmds.makeIdentity(pvControl, apply=True, t=1, r=1, s=1, n=0, pn=1)
         cmds.delete(ch=True)
 
-        # cmds.parent(pvControl, pvGroup)
-        # cmds.xform(pvGroup, t=pos, ws=True)
-
         # make a pole vector
         cmds.poleVectorConstraint(pvControl, t_handleName, w=1.0)
 
@@ -210,7 +216,98 @@ class RigArm(object):
         else:
             print "Missing a control name to set color - moving on"
 
-#jsonFilePath = os.path.join( os.environ['RIGGING_TOOL'], 'layout', 'layout.json' )
-#_jsonRigData = utils.readJson(jsonFilePath)
-#myClass = RigArm()
-#myClass.rig_arm(_jsonRigData)
+    def DebugPrint(self):
+        print "Hello: ", self
+
+
+# jsonFilePath = os.path.join( os.environ['RIGGING_TOOL'], 'layout', 'layout.json' )
+# _jsonRigData = utils.readJson(jsonFilePath)
+# myClass = RigArm()
+# myClass.rig_arm(_jsonRigData)
+
+# *********************** #
+# UI - PySide Experiments #
+# *********************** #
+
+def maya_main_window():
+    # get 'pointer' for main Maya from omui
+    main_window_ptr = omui.MQtUtil.mainWindow()
+    if main_window_ptr is not None:
+        return wrapInstance(long(main_window_ptr), QtGui.QWidget)
+    else:
+        print "ERROR OBTAINING POINTER"
+
+
+class RiggingToolUi(QtGui.QDialog):
+    def __init__(self, parent=maya_main_window()):
+        super(RiggingToolUi, self).__init__(parent)
+
+        self.setWindowTitle("Rigging Tool")
+        self.setWindowFlags(QtCore.Qt.Tool)
+
+        # Delete UI on close to avoid winEvent error
+        self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
+
+        self.create_layout()
+        self.create_connections()
+
+        jsonFilePath = os.path.join(os.environ['RIGGING_TOOL'], 'layout', 'layout.json')
+        self.jsonData = utils.readJson(jsonFilePath)
+        self.projectRigData = self.jsonData['default']
+
+        self.classyArm = RigArm()
+
+
+    def create_layout(self):
+        self.btn_rigFromJson = QtGui.QPushButton("Rig From JSON")
+        self.btn_rigFromLocators = QtGui.QPushButton("Rig from LOCATORS")
+        self.btn_saveLocatorsAsJson = QtGui.QPushButton("Save LOCATORS as JSON")
+        self.btn_thisDoesNothing = QtGui.QPushButton("This Button Does Nothing")
+
+        main_layout = QtGui.QVBoxLayout()
+        main_layout.setContentsMargins(2, 2, 2, 2)
+        main_layout.setSpacing(5)
+        main_layout.addWidget(self.btn_rigFromJson)
+        main_layout.addWidget(self.btn_rigFromLocators)
+        main_layout.addWidget(self.btn_saveLocatorsAsJson)
+        main_layout.addWidget(self.btn_thisDoesNothing)
+        main_layout.addStretch()
+
+        self.setLayout(main_layout)
+
+    def create_connections(self):
+        self.btn_rigFromJson.clicked.connect(self.RigFromJson)
+        self.btn_rigFromLocators.clicked.connect(self.RigFromLocators)
+        self.btn_saveLocatorsAsJson.clicked.connect(self.SaveLocatorsAsJson)
+        self.btn_thisDoesNothing.clicked.connect(self.ThisDoesNothing)
+
+
+    def RigFromJson(self):
+        print "Rig From JSON"
+        self.classyArm.DebugPrint()
+        self.classyArm.rig_arm(self.projectRigData)
+
+
+    def RigFromLocators(self):
+        print "RIG FROM LOCATORS!"
+
+
+    def SaveLocatorsAsJson(self):
+        print "SAVE LOCATORS TO JSON!"
+
+
+    def ThisDoesNothing(self):
+        print "Ze Goggles..."
+
+def LaunchUI():
+    print "Attempting To Launch..."
+    print "...we live in: ", __name__
+    # Development workaround for winEvent error when running
+    # the script multiple times
+    try:
+        ui.close()
+        ui.deleteLater()
+    except:
+        pass
+    ui = RiggingToolUi()
+    ui.show()

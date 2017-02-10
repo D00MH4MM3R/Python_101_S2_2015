@@ -1,10 +1,9 @@
 import maya.cmds as cmds
 import json
-# import tempFile #???
 
-def writeJson(fileName, data):
+def writeJson(fileName, data, prtyIndent=None):
     with open(fileName, 'w') as outFile:
-        json.dump(data,outFile)
+        json.dump(data, outFile, indent=prtyIndent, separators=(',', ': '), sort_keys=True)
     outFile.close()
 
 def readJson(fileName):

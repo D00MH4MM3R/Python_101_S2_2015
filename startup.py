@@ -9,3 +9,4 @@ print "Startup"
 # cmds.currentUnit(linear='cm')
 
 import ui.ui as ui
+reload(ui)
