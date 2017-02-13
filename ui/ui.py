@@ -3,8 +3,6 @@ import pymel.core as pm
 print 'UI'
 
 def rigarm(*args):
-	print 'Rig_Arm'
-
 	import rig.rig_arm as ra
 	reload(ra)
 

@@ -9,12 +9,16 @@ import pymel.core as pm
 
 def circle(self, ctrlName):
 	ctrl = pm.circle(name=ctrlName, normal=(1,0,0), center=(0,0,0), radius=1.5, constructionHistory=False)
+	
+	return ctrl
 
 
 def square(self, ctrlName):
-	ctrl = pm.curve(name=ctrlName, degree=1, point=[(1.25, 0, 0), (0, 0, 0), (0, 0, 1.25), (1.25, 0, 1.25), (1.25, 0, 0)], knot=[0, 1, 2, 3, 4])
+	ctrl = pm.curve(name=ctrlName, degree=1, point=[(0.5,0,0.5), (0.5,0,-0.5), (-0.5,0,-0.5), (-0.5,0,0.5), (0.5,0,0.5)], knot=[0, 1, 2, 3, 4])
 	pm.xform(scale=(1.5, 1.5, 1.5), rotation=(0, 0, 90), preserve=True, centerPivots=True)
-	pm.makeIdentity(apply=True, translate=True, rotate=True, scale=True, normal=False, preserveNormals=True) 
+	pm.makeIdentity(apply=True, translate=True, rotate=True, scale=True, normal=False, preserveNormals=True)
+	
+	return ctrl 
 	
 
 def text(self, txt, ctrlName):
@@ -37,5 +41,4 @@ def text(self, txt, ctrlName):
 	if txtChildren:
 		pm.delete(txtChildren)
 
-
-return ctrl
+	return ctrl

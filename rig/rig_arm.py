@@ -8,57 +8,48 @@ Description:
 
 import pymel.core as pm
 import system.ctrl_shapes as cShape
+import system.utils as utils
 import json
+import os
 
 print 'Starting IK-FK Arm Rig...'
 
-class GlobalVars:
+class GlobalVars():
 
-	rigInfo = json.loads(inputData)
+	fileName = os.environ['DATA_PATH'] + 'data.json'
+	#inputData = utils.readJson(fileName)
+	rigInfo = json.loads(utils.readJson(fileName))
 
-'''
-I was thinking I could break out the keys into their separate lists.  Don't know if this would be the way to go or not.
+	keys = rigInfo.get('keyNames')
+	# index 0 = bodyPlacement - index 1 = jntType - index 2 = jnts - index 3 = ikCtrls
+	# index 4 = fkCtrls - index 5 = ctrlGrps - index 6 = jntPos
 
-	for key, value in rigInfo.iteritems():
-		key = {}
-		key = value
-'''
-	rig_data = {}
-	rig_data['bodyPlacement'] = ['lt_', 'rt_']
-	rig_data['jntType'] = ['ik_', 'fk_', 'rig_', 'bind_']
-	rig_data['armJnts']	= ['shoulder_jnt', 'elbow_jnt', 'wrist_jnt', 'wristEND_jnt']
-	rig_data['armIKCtrls']	= ['ctrl_ikWrist', 'ikh_arm', 'ctrl_PV_arm', 'ctrl_ikHand']
-	rig_data['armFKCtrls']	= ['ctrl_fkShoulder', 'ctrl_fkElbow', 'ctrl_fkWrist']
-	rig_data['armGrps'] = ['grp_ctrl_ikWrist', 'grp_ctrl_fkShoulder', 'grp_ctrl_fkElbow', 'grp_ctrl_fkWrist', 'grp_arm']
-	rig_data['armPos'] = [[-7, 0, 2], [-1, 0, 0], [4, 0, 2], [7, 0, 3]]
-
-
-	
+		
 class RigArm():
 
 	def createRig(self):
 		self.createJoint()
-		self.createIK()
-		self.createFK()
-		self.connectJoints()
-		self.createPoleVector()
-		self.createIKSwitch()
+		#self.createIK()
+		#self.createFK()
+		#self.connectJoints()
+		#self.createPoleVector()
+		#self.createIKSwitch()
 
 
 	def createJoint(self):
-		armList = {} 
-		armList = GlobalVars.rigInfo['jntType']
-		for key in armList.iteritems():
-			print value
+		armList = GlobalVars.rigInfo.get(keys[1])
+		jntList = GlobalVars.rigInfo.get(keys[2])
 
 		for item in armList:
+			print 'item = ', item
 			for jnt in jntList:
+				print 'joint = ', jnt
 				jntName = item+jnt[0]
 				pm.joint(name=jntName, position=jnt[1], radius=.5)
 
 			pm.select(deselect=True)
 
-
+'''
 	def createIK(self):
 		# create IK handle
 		pm.ikHandle(name='ikh_arm', startJoint='ik_shoulder_jnt', endEffector='ik_wrist_jnt', solver='ikRPsolver', priority=2, weight=1)
@@ -71,7 +62,7 @@ class RigArm():
 
 		# create square control
 		#TODO: need to get control name - ctrl_ikWrist
-		ctrl_ikWrist = cShape.square(self, ctrlName)
+		#ctrl_ikWrist = cShape.square(self, ctrlName)
 
 		# parent control to group
 		pm.parent('ctrl_ikWrist', 'grp_ctrl_ikWrist')
@@ -101,7 +92,7 @@ class RigArm():
 			grp = pm.group(name='grp_ctrl_' + jntName, empty=True)
 
 			#TODO: add control name - control_jointname
-			ctrl_jnt = cShape.circle(self, ctrlName)
+			#ctrl_jnt = cShape.circle(self, ctrlName)
 			
 			# parent control to grp
 			pm.parent(ctrl, grp)
@@ -166,7 +157,7 @@ class RigArm():
 
 		#TODO: get control name - ctrl_ikHand
 		# creates text for IK/FK 
-		ctrl_ikHand = cShape.text(self, 'switch', ctrlName)
+		#ctrl_ikHand = cShape.text(self, 'switch', ctrlName)
 
 		# rename control
 		newName = ctrl_ikHand[0].strip('Shape')
@@ -187,7 +178,7 @@ class RigArm():
 		pm.delete('lctr_switch')
 
 		pm.select(deselect=True)
-
+'''
 
 
 

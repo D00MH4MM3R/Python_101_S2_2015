@@ -1,20 +1,17 @@
-import maya.cmds as cmds
-import os
-import system.utils as utils
-reload(utils)
+import pymel.core as pm 
+import platform
 
-print "Startup"
-
+print 'Startup'
 
 # Change the current time unit to ntsc
-cmds.currentUnit( time='ntsc' )
+pm.currentUnit(time='ntsc')
 
-# Change the current linear unit to inches
-cmds.currentUnit( linear='cm' )
+# Change the current linear unit to centimeters
+pm.currentUnit(linear='cm')
 
-# Set a system path to files.  We can do this with the os module
-os.environ["RDOJO_DATA"] = 'C:/Users/Griffy/Documents/GitHub/Python_101_S2_2015/'
+# Checking OS
+plat = platform.system()
+if plat == 'Windows':
+	os.environ['DATA_PATH'] = 'C:/Users/rhondaray/Documents/GitHub/Python_101_S2_2015/layout/'
 
 import ui.ui as ui
-reload(ui)
-ui.RDojo_UI()
