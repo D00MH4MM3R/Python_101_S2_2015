@@ -10,3 +10,4 @@ print "Startup"
 
 import ui.ui as ui
 reload(ui)
+ui.RDojo_UI()

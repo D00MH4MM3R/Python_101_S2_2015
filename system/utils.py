@@ -13,9 +13,6 @@ def readJson(fileName):
 
 
 def SaveCustomShape(shapeName=None, debug=False):
-    # number of CVs = degree + spans.
-    # degs = cmds.getAttr( 'CTRL_Pocket_Master.degree' )
-    # spans = cmds.getAttr( 'CTRL_Pocket_Master.spans' )
     if shapeName == None:
         shapeName = cmds.ls(sl=True)[0]
     cvCount = cmds.getAttr(shapeName + '.cp', s=1)
@@ -25,7 +22,7 @@ def SaveCustomShape(shapeName=None, debug=False):
         p = cmds.xform(cp, q=True, t=True, ws=True)
         cvPos.append(p)
 
-    # write to CustomShapes.json:
+    # TODO : write to CustomShapes.json:
     # { "shapeName": [cvPos, cvPos, cvPos] }
     if debug:
         return cvPos
@@ -51,3 +48,22 @@ def CreateCustomShape(shapeName=None, cvPositions=[]):
 # temp = None
 # temp = SaveCustomShape()
 # CreateCustomShape(shapeName="ctrl_control_name", cvPositions=temp)
+
+def SetCustomColor(objectName=None, rgb=None, *args):
+    for a in args:
+        print a
+    if objectName:
+        if rgb:
+            r, g, b = rgb[0], rgb[1], rgb[2]
+            try:
+                # override default display draw
+                cmds.setAttr(objectName + ".overrideEnabled", True)
+                cmds.setAttr(objectName + ".overrideRGBColors", True)
+                # set RGB color
+                cmds.setAttr(objectName + ".overrideColorRGB", r, g, b)
+            except:
+                print "Something has gone terribly wrong while attempting to override {0} colors with {1}".format(objectName, rgb)
+        else:
+            print "Missing an RGB list - continue with defaults"
+    else:
+        print "Missing a control name to set color - moving on"
