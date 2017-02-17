@@ -28,6 +28,10 @@ class RigArm(object):
                 chainData = jsonRigData['chains'][chain]
 
                 # short circuit if we already established we don't want to build the current chain
+                #if chainData['use_ik'] is False and pfx.lower() == 'ik':
+                #    continue
+                #if chainData['use_fk'] is False and pfx.lower() == 'fk':
+                #    continue
 
                 if chainData['use_mirror'] == True:
                     for mName in jsonRigData['mirrorName']:
@@ -39,8 +43,8 @@ class RigArm(object):
     def ConstructJointChain(self, prefix='', chain='', chainData=None, mirrorNaming=None):
         # start a new chain
         chainJoints = []
-
         cmds.select(cl=True)
+
         for jnt in chainData['joints']:
             ikhName = ''
             newJointName = ''
