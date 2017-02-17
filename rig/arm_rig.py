@@ -1,34 +1,80 @@
 import maya.cmds as cmds
 import maya.OpenMaya as om
-
-
-rig_data = {'prefix': ['c', 'd'], 'type': ['IK', 'FK', 'RIG'], 'bones': ['shoulder', 'elbow', 'wrist', 'endWrist'], 'positions': [[0, 0, 0], [7, 0, -1], [14, 0, 0], [15, 0, 0]]}
+import system.utils as utils
+import json
+import collections
 
 class Rig_Arm:
-    
+
+    def __init__(self):
+        self.rig_info = {}
+        self.rig_data = {}
+        self.layoutPos = {}
+        self.sysPath = 'C:/Users/Mauricio Pachon/Documents/GitHub/Python_101_S2_2015/layout/log.json'
+        self.dataPath = 'C:/Users/Mauricio Pachon/Documents/GitHub/Python_101_S2_2015/layout/data.json'
+
+    ## Importing parameters such as names and positions ##
+    def importData(self, path):
+        importData = utils.readJson(self.dataPath) 
+        self.rig_data = json.loads(importData)
+        print 'Parameters Imported'
+
+    ## Executing the required functions for building the arm ##
     def rig_arm(self):
-        rig_info = {}
 
-        rig_info['ikJnts'] = self.jointCreation(rig_data['prefix'][0], rig_data['type'][0], rig_data['bones'], rig_data['positions'])
+        self.importData(self.dataPath)
+
+        self.getCoords()
         
-        rig_info['fkJnts'] = self.jointCreation(rig_data['prefix'][0], rig_data['type'][1], rig_data['bones'], rig_data['positions'])
+        self.rig_info['ikJnts'] = self.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][0], self.rig_data['bones'], self.layoutPos)
         
-        rig_info['rigJnts'] = self.jointCreation(rig_data['prefix'][0], rig_data['type'][2], rig_data['bones'], rig_data['positions'])
+        self.rig_info['fkJnts'] = self.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][1], self.rig_data['bones'], self.layoutPos)
+        
+        self.rig_info['rigJnts'] = self.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][2], self.rig_data['bones'], self.layoutPos)
             
-        rig_info['ikArm'] = self.ikSystemCreation(rig_info['ikJnts'][0], rig_info['ikJnts'][1], rig_info['ikJnts'][2], 'arm')
+        self.rig_info['ikArm'] = self.ikSystemCreation(self.rig_info['ikJnts'][0], self.rig_info['ikJnts'][1], self.rig_info['ikJnts'][2], 'arm')
         
-        rig_info['fkCtrls'] = self.fkSystem(rig_info['fkJnts'][0])
+        self.rig_info['fkCtrls'] = self.fkSystem(self.rig_info['fkJnts'][0])
         
-        rig_info['nodes'] = self.ikFkBlend()
+        self.rig_info['nodes'] = self.ikFkBlend()
 
-        return rig_info
+        self.cleanUp()
+
+        utils.writeJson(self.sysPath, self.rig_info)
         
+    ## Get the positions from the layout objects ##
+    def getCoords(self, *args):
+        self.rawCoords = {}
+        layoutObjs = cmds.ls(typ = 'locator')
+        for l in layoutObjs:
+            name = l.split('_')
+            if name[0] == 'armLy':
+                locTrans = cmds.listRelatives(l, p = True)
+                self.rawCoords[locTrans[0]] = cmds.xform(locTrans, q = True, t = True)
+                print locTrans
+        
+        for key, value in self.rawCoords.iteritems():
+            newKey = key.split('_')
+            convertedVal = []
+            for v in value:
+                convertedVal.append(int(v))
+            self.layoutPos[newKey[1]] = convertedVal
+        print self.rawCoords            
+        print self.layoutPos
+        print layoutObjs
+
+        
+
+
+        '''
+        [self.layoutPos[l] = cmds.xform(l, q = True, t = True) if name[0] == 'armLy' for l in layoutObjs]
+        '''
     ## Creating the joint chains ##
     def jointCreation(self, prefix, chainTypes, name, position):
         joints = []
         for n in name:
-            #For each chain created, it then creates each joint specified in the name argument #            
-            joints.append(cmds.joint(n = prefix + '_' + chainTypes + '_' + n + '_jnt', p = position[name.index(n)]))
+            #For each chain created, it then creates each joint specified in the name argument #
+            joints.append(cmds.joint(n = prefix + '_' + chainTypes + '_' + n + '_jnt', p = position[n]))
             if name.index(n) != 0:
                 # If the joint isnt the first one, it will orient it's parent #
                 cmds.joint(prefix + '_' + chainTypes + '_' + name[name.index(n)-1] + '_jnt', e = True, zso = True, oj = 'xyz', sao = 'yup')
@@ -41,7 +87,7 @@ class Rig_Arm:
     ## Creating the IK Arm ##
     def ikSystemCreation(self, startJoint, midJoint, endJoint, extremity):
         # Creating the IK handle    
-        ikH = cmds.ikHandle( sj=startJoint, ee=endJoint, p=2, w=.5, n = extremity + '_ikHandle')[0]
+        ikH = cmds.ikHandle( sj=startJoint, ee=endJoint, p=2, w=.5, n = extremity + '_ikHandle', sol = 'ikRPsolver')[0]
         
         # Creating the IK Arm Control   
         ikControl = cmds.circle(n = 'ctrl_IK_' + extremity, nr = (1,0,0))[0]
@@ -129,7 +175,7 @@ class Rig_Arm:
     def ikFkBlend(self, *args):
         
         # Binding both chains to target chain and creating blend control.
-        tgJoints = rig_info['rigJnts']
+        tgJoints = self.rig_info['rigJnts']
         
         # Creating an IK FK blend control
         switchControl = cmds.circle(n = 'ctrl_IkFk_Switch', nr = (0,1,0))
@@ -146,31 +192,26 @@ class Rig_Arm:
             currentNode = cmds.shadingNode('blendColors', n = nodeName[2] + 'Blend_bc', au = True)
             nodes.append(currentNode)
             cmds.connectAttr(str(switchControl[0]) + '.ikFk_Switch', str(currentNode) + '.blender')
-            cmds.connectAttr(rig_info['ikJnts'][tgJoints.index(t)] + '.rotateX', currentNode + '.color1R')
-            cmds.connectAttr(rig_info['ikJnts'][tgJoints.index(t)] + '.rotateY', currentNode + '.color1G')
-            cmds.connectAttr(rig_info['ikJnts'][tgJoints.index(t)] + '.rotateZ', currentNode + '.color1B')
-            cmds.connectAttr(rig_info['fkJnts'][tgJoints.index(t)] + '.rotateX', currentNode + '.color2R')
-            cmds.connectAttr(rig_info['fkJnts'][tgJoints.index(t)] + '.rotateY', currentNode + '.color2G')
-            cmds.connectAttr(rig_info['fkJnts'][tgJoints.index(t)] + '.rotateZ', currentNode + '.color2B')
-            cmds.connectAttr(currentNode + '.output.outputR', t + '.rotateX')
-            cmds.connectAttr(currentNode + '.output.outputG', t + '.rotateY')
-            cmds.connectAttr(currentNode + '.output.outputB', t + '.rotateZ')
+            cmds.connectAttr(self.rig_info['ikJnts'][tgJoints.index(t)] + '.rotate', currentNode + '.color1')            
+            cmds.connectAttr(self.rig_info['fkJnts'][tgJoints.index(t)] + '.rotate', currentNode + '.color2')
+            cmds.connectAttr(currentNode + '.output', t + '.rotate')
     
         return nodes
 
 
-    
-    '''#Cleaning up the Outliner and Scene
-    ikCGroup = cmds.group(rig_info['ikArm'][0], rig_info['ikArm'][1], n = 'ikControls_grp')
-    jntsGrp = cmds.group(rig_info['ikJnts'][0], rig_info['fkJnts'][0], rig_info['rigJnts'][0], n = 'joints_grp')
-    ikHGroup = cmds.group(rig_info['ikArm'][2], n = 'nodes_grp')
-    cmds.group(ikCGroup, jntsGrp, ikHGroup, 'ctrl_FK_shoulder_grp', 'ctrl_IkFk_Switch_grp', n = 'arm_grp')
-    cmds.select(d=True)
-    cmds.setAttr(str(rig_info['ikJnts'][0]) +'.visibility', 0)
-    cmds.setAttr(str(rig_info['fkJnts'][0]) + '.visibility', 0)
 
-    #Control Visibility
-    cmds.setDrivenKeyframe('ctrl_FK_shoulder_grp.visibility', cd = 'ctrl_IkFk_Switch.ikFk_Switch', dv = 0, v = 1 )
-    cmds.setDrivenKeyframe('ctrl_FK_shoulder_grp.visibility', cd = 'ctrl_IkFk_Switch.ikFk_Switch',  dv = 1, v = 0 )
-    cmds.setDrivenKeyframe('ikControls_grp.visibility', cd = 'ctrl_IkFk_Switch.ikFk_Switch',  dv = 1, v = 1 )
-    cmds.setDrivenKeyframe('ikControls_grp.visibility', cd = 'ctrl_IkFk_Switch.ikFk_Switch',  dv = 0, v = 0 )'''
+    def cleanUp(self, *args):
+        #Cleaning up the Outliner and Scene
+        ikCGroup = cmds.group(self.rig_info['ikArm'][0], self.rig_info['ikArm'][1], n = 'ikControls_grp')
+        jntsGrp = cmds.group(self.rig_info['ikJnts'][0], self.rig_info['fkJnts'][0], self.rig_info['rigJnts'][0], n = 'joints_grp')
+        ikHGroup = cmds.group(self.rig_info['ikArm'][2], n = 'nodes_grp')
+        cmds.group(ikCGroup, jntsGrp, ikHGroup, 'ctrl_FK_shoulder_grp', 'ctrl_IkFk_Switch_grp', n = 'arm_grp')
+        cmds.select(d=True)
+        cmds.setAttr(str(self.rig_info['ikJnts'][0]) +'.visibility', 0)
+        cmds.setAttr(str(self.rig_info['fkJnts'][0]) + '.visibility', 0)
+
+        #Control Visibility
+        cmds.setDrivenKeyframe('ctrl_FK_shoulder_grp.visibility', cd = 'ctrl_IkFk_Switch.ikFk_Switch', dv = 0, v = 1 )
+        cmds.setDrivenKeyframe('ctrl_FK_shoulder_grp.visibility', cd = 'ctrl_IkFk_Switch.ikFk_Switch',  dv = 1, v = 0 )
+        cmds.setDrivenKeyframe('ikControls_grp.visibility', cd = 'ctrl_IkFk_Switch.ikFk_Switch',  dv = 1, v = 1 )
+        cmds.setDrivenKeyframe('ikControls_grp.visibility', cd = 'ctrl_IkFk_Switch.ikFk_Switch',  dv = 0, v = 0 )
