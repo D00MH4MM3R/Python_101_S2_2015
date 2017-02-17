@@ -9,13 +9,10 @@
 # TODO : Setup RvL control colours for each type, e.g. 'ctrl_colors': { 'fk_right': [0,1,0], 'fk_left': [1,0,0] }, etc.
 # TODO : Final Cleanup Phase of parenting full groups; RIGHT_ARM -> SPINE <- LEFT_ARM, etc.
 
-#from PySide import QtCore
-#from PySide import QtGui
-#from shiboken import wrapInstance
-#import maya.OpenMayaUI as omui
 import maya.cmds as cmds
 import system.utils as utils
-#import os
+import maya.OpenMaya as om
+import os
 
 print "We Have Imported RIG_ARM"
 
@@ -29,6 +26,8 @@ class RigArm(object):
         for pfx in jsonRigData['prefix']:
             for chain in jsonRigData['chains']:
                 chainData = jsonRigData['chains'][chain]
+
+                # short circuit if we already established we don't want to build the current chain
 
                 if chainData['use_mirror'] == True:
                     for mName in jsonRigData['mirrorName']:
@@ -66,7 +65,7 @@ class RigArm(object):
         if chainData['use_ik'] and prefix.lower() == 'ik':
             # print "BUILDING IK"
             self.CreateIKController(handleName=ikhName, startJoint=chainJoints[0], endJoint=chainJoints[-1], alignment=chainData['ctrl_alignment'])
-            self.CreatePoleVector(handleName=ikhName, alignmentJoint=chainJoints[1], offset=chainData['offset_value'])
+            self.CreatePoleVector(handleName=ikhName, alignmentJoints=chainJoints)
 
         if chainData['use_fk'] and prefix.lower() == 'fk':
             # print "BUILDING FK"
@@ -97,24 +96,50 @@ class RigArm(object):
         cmds.parent(ikHandleName, ikControl)
 
 
-    def CreatePoleVector(self, handleName='', alignmentJoint='', offset=3.0):
+    def CreatePoleVector(self, handleName='', alignmentJoints=[]):
         # TODO :: Math it up a little more in here
         pvControl = str('ctrl_pv_' + handleName)
         t_handleName = str('ikh_' + handleName)
 
-        pos = cmds.xform(alignmentJoint, q=True, t=True, ws=True)
+        pos = self.CalculatePVPosition(alignmentJoints)
         # cmds.group(em=True, name=pvGroup)
 
         # make a shape, nudge it around, freeze transforms, deleteHistory
-        cmds.circle(n=pvControl, nr=(0, 0, 0), c=(0, 0, 0), r=0.5)
-        utils.SetCustomColor(objectName=pvControl, rgb=[1.0, 1.0, 0.0])
+        cmds.cone(n=pvControl, r=0.5)
+        #cmds.circle(n=pvControl, nr=(0, 0, 0), c=(0, 0, 0), r=0.5)
+        utils.SetCustomColor(objectName=pvControl, rgb=[0.0, 1.0, 0.0])
 
-        cmds.xform(pvControl, t=(pos[0], pos[1], pos[2] - offset), roo='xyz', ro=(0, 90, 0))
+        cmds.xform(pvControl, t=pos, roo='xyz', ro=(0, 90, 0))
         cmds.makeIdentity(pvControl, apply=True, t=1, r=1, s=1, n=0, pn=1)
         cmds.delete(ch=True)
 
         # make a pole vector
         cmds.poleVectorConstraint(pvControl, t_handleName, w=1.0)
+
+    def CalculatePVPosition(self, joints):
+        start = cmds.xform(joints[0], q=True, ws=True, t=True)
+        mid = cmds.xform(joints[1], q=True, ws=True, t=True)
+        end = cmds.xform(joints[2], q=True, ws=True, t=True)
+
+        startV = om.MVector(start[0], start[1], start[2])
+        midV = om.MVector(mid[0], mid[1], mid[2])
+        endV = om.MVector(end[0], end[1], end[2])
+
+        startEnd = endV - startV
+        startMid = midV - startV
+
+        dotP = startMid * startEnd
+
+        proj = float(dotP)/float(startEnd.length())
+
+        startEndN = startEnd.normal()
+
+        projV = startEndN * proj
+        arrowV = startMid - projV
+        arrowV *= 2.5
+        finalV = arrowV + midV
+
+        return ([finalV.x, finalV.y, finalV.z])
 
 
     def CreateFKController(self, joints=None, alignment=(0, 0, 0)):
