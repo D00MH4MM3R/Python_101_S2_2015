@@ -21,7 +21,17 @@ def square(self, ctrlName):
 	return ctrl 
 	
 
-def text(self, txt, ctrlName):
+def pointer(self, ctrlName):
+	ctrl = pm.circle(name=ctrlName, normal=(0,1,0), radius=1)[0]
+	pm.select(ctrlName+'.ep[2:3]', ctrlName+'.ep[5:6]', replace=True)
+	pm.xform(scale=[.318733, 1, 1])
+	pm.select(ctrlName+'.ep[3]', ctrlName+'.ep[5]', replace=True)
+	pm.xform(scale=[.400636, 1, 1])
+
+	return ctrl
+
+
+def text(self, ctrlName, txt):
 	ctrl = pm.textCurves(name=ctrlName, font='Courier', text=txt)
 
 	# get curves

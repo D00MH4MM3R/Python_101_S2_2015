@@ -14,69 +14,137 @@ import os
 
 print 'Starting IK-FK Arm Rig...'
 
-class GlobalVars():
 
-	fileName = os.environ['DATA_PATH'] + 'data.json'
-	#inputData = utils.readJson(fileName)
-	rigInfo = json.loads(utils.readJson(fileName))
-
-	keys = rigInfo.get('keyNames')
-	# index 0 = bodyPlacement - index 1 = jntType - index 2 = jnts - index 3 = ikCtrls
-	# index 4 = fkCtrls - index 5 = ctrlGrps - index 6 = jntPos
-
-		
 class RigArm():
 
+	def __init__(self):
+		fileName = os.environ['DATA_PATH'] + 'data.json'
+		self.rigInfo = json.loads(utils.readJson(fileName))
+	 
+		self.keyNames = self.rigInfo.get('keyNames')
+		# index 0 = bodyPlacement, index 1 = jntType, index 2 = jnts, index 3 = ikCtrls
+		# index 4 = fkCtrls, index 5 = ctrlGrps, index 6 = jntPos
+
+		self.bodySide = self.rigInfo.get('bodyPlacement')
+
+
 	def createRig(self):
-		self.createJoint()
-		#self.createIK()
-		#self.createFK()
-		#self.connectJoints()
-		#self.createPoleVector()
-		#self.createIKSwitch()
+		print 'starting create rig...'
+		self.createJoint('both')
+		self.createIK('both')
+		self.createFK('both')
+		self.connectJoints('both')
+		self.createPoleVector('both')
+		self.createIKSwitch('both')
 
 
-	def createJoint(self):
-		armList = GlobalVars.rigInfo.get(keys[1])
-		jntList = GlobalVars.rigInfo.get(keys[2])
+	# when UI is created, the sides parameter with be passed in - left, right or both
+	def createJoint(self, sides):
+		# get list of joints, type of joints and the joint position from rig info
+		ikfkList = self.rigInfo.get(self.keyNames[1])
+		jntList = self.rigInfo.get(self.keyNames[2])
+		posList = self.rigInfo.get(self.keyNames[6])
 
-		for item in armList:
-			print 'item = ', item
-			for jnt in jntList:
-				print 'joint = ', jnt
-				jntName = item+jnt[0]
-				pm.joint(name=jntName, position=jnt[1], radius=.5)
+		# createSide is used for the left arm and mirrorSide is used for the right arm
+		if sides == 'both':
+			self.createSide(ikfkList, jntList, posList)
+			self.mirrorSide(ikfkList, jntList, posList)
+		elif sides == 'left':
+			self.createSide(ikfkList, jntList, posList)
+		else:
+			self.mirrorSide(ikfkList, jntList, posList)
 
-			pm.select(deselect=True)
 
-'''
-	def createIK(self):
+	def createSide(self, ikfkList, jntList, posList):
+		# used to create the left arm
+		for item in ikfkList:
+			for j in range(len(jntList)):
+				jntName = self.bodySide[0]+item+jntList[j]
+				pm.joint(name=jntName, position=posList[j], radius=.5)
+
+			pm.select(deselect=True)	
+
+
+	def mirrorSide(self, ikfkList, jntList, posList):
+		# used to create the right arm
+		for item in ikfkList:
+			for j in range(len(jntList)):
+				jntName = self.bodySide[1]+item+jntList[j]
+				if posList[j][0] > 0:
+					posList[j][0] = posList[j][0] * -1
+				pm.joint(name=jntName, position=posList[j], radius=.5, orientation=(180,0,0))
+
+			pm.select(deselect=True)	
+
+
+	def createIK(self, sides):
+		if sides == 'both':
+			for s in range(len(self.bodySide)):
+				self.ikSetup(self.bodySide[s])
+		else:
+			self.ikSetup(sides)
+		
+
+	def ikSetup(self, side):
 		# create IK handle
-		pm.ikHandle(name='ikh_arm', startJoint='ik_shoulder_jnt', endEffector='ik_wrist_jnt', solver='ikRPsolver', priority=2, weight=1)
+		ikName = self.searchControls('ikh', 'ik')
+		ikName = side+ikName
+		pm.ikHandle(name=ikName, startJoint=side+'ik_shoulder_jnt', endEffector=side+'ik_wrist_jnt', solver='ikRPsolver', priority=2, weight=1)
 
 		# get world space position of wrist joint
-		posWrist = pm.xform('ik_wrist_jnt', query=True, translation=True, worldSpace=True)
+		posWrist = pm.xform(side+'ik_wrist_jnt', query=True, translation=True, worldSpace=True)
 
 		# create an empty group and orient to wrist
-		pm.group(empty=True, name='grp_ctrl_ikWrist')
-
+		grpName = side+self.searchGroups('ikWrist')
+		pm.group(empty=True, name=grpName)
+		
 		# create square control
-		#TODO: need to get control name - ctrl_ikWrist
-		#ctrl_ikWrist = cShape.square(self, ctrlName)
+		ctrlName = side+self.searchControls('Wrist', 'ik')
+		ctrl = cShape.square(self, ctrlName)
 
 		# parent control to group
-		pm.parent('ctrl_ikWrist', 'grp_ctrl_ikWrist')
+		pm.parent(ctrl, grpName)
 
 		# move the group to the joint
-		pm.xform('grp_ctrl_ikWrist', translation=posWrist, worldSpace=True)
+		pm.xform(grpName, translation=posWrist, worldSpace=True)
 
 		# parent ik handle to wrist control
-		pm.parent('ikh_arm', 'ctrl_ikWrist')
+		pm.parent(ikName, ctrl)
+
+		
+	def searchControls(self, strName, ikfk):
+		# find the control in the ik controls list
+		# get list of ik controls from rig info
+		if ikfk == 'ik':
+			ctrls = self.rigInfo.get(self.keyNames[3])
+		else:
+			ctrls = self.rigInfo.get(self.keyNames[4])
+	
+		# get the index of the list item that has the string name as a substring
+		indx = [idx for idx, s in enumerate(ctrls) if strName in s][0]
+		return ctrls[indx]
 
 
-	def createFK(self):
+	def searchGroups(self, strName):
+		# find the control group in the group list
+		# get list of groups from rig info
+		grps = self.rigInfo.get(self.keyNames[5])
+	
+		indx = [idx for idx, s in enumerate(grps) if strName in s][0]
+		return grps[indx]
+
+
+	def createFK(self, sides):
+		if sides == 'both':
+			for s in range(len(self.bodySide)):
+				self.fkSetup(self.bodySide[s])
+		else:
+			self.fkSetup(sides)
+
+		
+	def fkSetup(self, side):	
 		# get list of selected objects minus the end joint
-		pm.select('fk_shoulder_jnt')
+		pm.select(side+'fk_shoulder_jnt')
 		selJoints = pm.ls(selection=True, dag=True)
 		selJoints.pop(-1)
 
@@ -86,13 +154,14 @@ class RigArm():
 			posWrist = pm.xform(jnt, query=True, translation=True, worldSpace=True)
 
 			# pull out the joint name, upper case the first letter and concatenate to fk
-			jntName = 'fk' + jnt.split('_')[1].title()
+			jntName = 'fk' + jnt.split('_')[2].title()
 
 			# create group from joint name
-			grp = pm.group(name='grp_ctrl_' + jntName, empty=True)
+			grpName = side+self.searchGroups(jntName)
+			grp = pm.group(name=grpName, empty=True)
 
-			#TODO: add control name - control_jointname
-			#ctrl_jnt = cShape.circle(self, ctrlName)
+			ctrlName = self.searchControls(jntName, 'fk')
+			ctrl = cShape.circle(self, ctrlName)
 			
 			# parent control to grp
 			pm.parent(ctrl, grp)
@@ -104,81 +173,109 @@ class RigArm():
 			pm.parentConstraint(ctrl, jnt, maintainOffset=True)
 
 
-	def connectJoints(self):
+	def connectJoints(self, sides):
 		# connect IK and FK to rig joints
+		if sides == 'both':
+			for s in range(len(self.bodySide)):
+				self.connectSetup(self.bodySide[s])
+		else:
+			self.connectSetup(sides)
+
+
+	def connectSetup(self, side):
 		# select all three joint chains and group together
-		pm.select('rig_shoulder_jnt', replace=True)
-		pm.select('fk_shoulder_jnt', add=True)
-		pm.select('ik_shoulder_jnt', add=True)
-		pm.group(name='grp_arm')
+		pm.select(side+'rig_shoulder_jnt', replace=True)
+		pm.select(side+'fk_shoulder_jnt', add=True)
+		pm.select(side+'ik_shoulder_jnt', add=True)
+
+		grpName = side+self.searchGroups('arm')
+		pm.group(name=grpName)
 
 		# select same joint from each arm and add orient constraint
-		pm.orientConstraint('fk_shoulder_jnt', 'ik_shoulder_jnt', 'rig_shoulder_jnt')
-		pm.orientConstraint('fk_elbow_jnt', 'ik_elbow_jnt', 'rig_elbow_jnt')
-		pm.orientConstraint('fk_wrist_jnt', 'ik_wrist_jnt', 'rig_wrist_jnt')
+		pm.orientConstraint(side+'fk_shoulder_jnt', side+'ik_shoulder_jnt', side+'rig_shoulder_jnt')
+		pm.orientConstraint(side+'fk_elbow_jnt', side+'ik_elbow_jnt', side+'rig_elbow_jnt')
+		pm.orientConstraint(side+'fk_wrist_jnt', side+'ik_wrist_jnt', side+'rig_wrist_jnt')
 
 		# create control hierarchy
-		pm.parent('grp_ctrl_fkWrist', 'ctrl_fkElbow')
-		pm.parent('grp_ctrl_fkElbow', 'ctrl_fkShoulder')
+		pm.parent(side+'grp_ctrl_fkWrist', side+'ctrl_fkElbow')
+		pm.parent(side+'grp_ctrl_fkElbow', side+'ctrl_fkShoulder')
 
 		pm.select(deselect=True)
 
 
-	def createPoleVector(self):
+	def createPoleVector(self, sides):
+		if sides == 'both':
+			for s in range(len(self.bodySide)):
+				self.poleVectorSetup(self.bodySide[s])
+		else:
+			self.poleVectorSetup(sides)
+
+
+	def poleVectorSetup(self, side):
 		# used Lionel Gallat's idea for the pole vector - just converted to python
 		# create locator for placement of the pole vector
 		pm.spaceLocator(name='lctr_PV_arm')
-		posElbow = pm.xform('ik_elbow_jnt', query=True, translation=True, worldSpace=True)
+		posElbow = pm.xform(side+'ik_elbow_jnt', query=True, translation=True, worldSpace=True)
 		pm.xform('lctr_PV_arm', worldSpace=True, translation=posElbow)
 		pm.setAttr('lctr_PV_arm.tz', posElbow[2] - 5)
 
-		# set visibility attribute
-		pm.setAttr('lctr_PV_arm.visibility', False)
-
 		# create pole vector control
-		pm.circle(name='ctrl_PV_arm', normal=(0,1,0), radius=1)[0]
-		pm.select('ctrl_PV_arm.ep[2:3]', 'ctrl_PV_arm.ep[5:6]', replace=True)
-		pm.xform(scale=[.318733, 1, 1])
-		pm.select('ctrl_PV_arm.ep[3]', 'ctrl_PV_arm.ep[5]', replace=True)
-		pm.xform(scale=[.400636, 1, 1])
+		ctrlName = side+self.searchControls('PV', 'ik')
+		ctrl = cShape.pointer(self, ctrlName)
 
 		# move control to locator position
-		temp = pm.pointConstraint('lctr_PV_arm', 'ctrl_PV_arm')
+		temp = pm.pointConstraint('lctr_PV_arm', ctrl)
 		pm.delete(temp)
-		pm.makeIdentity('ctrl_PV_arm', apply=True, translate=1, rotate=1, scale=1, normal=0, preserveNormals=1) 
+		pm.makeIdentity(ctrl, apply=True, translate=1, rotate=1, scale=1, normal=0, preserveNormals=1) 
 		pm.delete('lctr_PV_arm')
 		pm.select(deselect=True)
 
 		# constrain the IK handle to the pole vector control
-		pm.poleVectorConstraint('ctrl_PV_arm', 'ikh_arm')
+		pm.poleVectorConstraint(ctrl, side+'ikh_arm')
 
 
-	def createIKSwitch(self):
+	def createIKSwitch(self, sides):
+		if sides == 'both':
+			for s in range(len(self.bodySide)):
+				self.switchSetup(self.bodySide[s])
+		else:
+			self.switchSetup(sides)
 
-		#TODO: get control name - ctrl_ikHand
-		# creates text for IK/FK 
-		#ctrl_ikHand = cShape.text(self, 'switch', ctrlName)
+
+	def switchSetup(self, side):
+		# creates text for IK/FK switch 
+		ctrlName = side+self.searchControls('Hand', 'ik')
+		ctrl = cShape.text(self, ctrlName, 'switch')
 
 		# rename control
-		newName = ctrl_ikHand[0].strip('Shape')
-		txtCurve = pm.rename(ctrl_ikHand[0], newName, ignoreShape = True)
-		pm.xform(ctrl_ikHand, centerPivots = True)
+		newName = ctrl[0].strip('Shape')
+		txtCurve = pm.rename(ctrl[0], newName, ignoreShape = True)
+		pm.xform(txtCurve, centerPivots = True)
 
 		# create locator for the IK switch
 		pm.spaceLocator(name='lctr_switch')
-		posEnd = pm.xform('rig_wristEND_jnt', query=True, translation=True, worldSpace=True)
+		posEnd = pm.xform(side+'rig_wristEND_jnt', query=True, translation=True, worldSpace=True)
 		pm.xform('lctr_switch', worldSpace=True, translation=posEnd)
-		pm.setAttr('lctr_switch.tx', posEnd[0] + 1.25)
+
+		if side == 'rt_':
+			pm.setAttr('lctr_switch.tx', posEnd[0] - 1.25)
+		else:
+			pm.setAttr('lctr_switch.tx', posEnd[0] + 1.25)
 
 		# move control to locator position
-		temp = pm.pointConstraint('lctr_switch', ctrl_ikHand)
+		temp = pm.pointConstraint('lctr_switch', txtCurve)
 		pm.delete(temp)
-		pm.xform(ctrl_ikHand, worldSpace=True, rotation=(0,-90,0), scale=(.5,.5,.5))
-		pm.makeIdentity(ctrl_ikHand, apply=True, translate=1, rotate=1, scale=1, normal=0, preserveNormals=1) 
+
+		if side == 'rt_':
+			pm.xform(txtCurve, worldSpace=True, rotation=(0,90,0), scale=(.5,.5,.5))
+		else:
+			pm.xform(txtCurve, worldSpace=True, rotation=(0,-90,0), scale=(.5,.5,.5))
+
+		pm.makeIdentity(txtCurve, apply=True, translate=1, rotate=1, scale=1, normal=0, preserveNormals=1) 
 		pm.delete('lctr_switch')
 
 		pm.select(deselect=True)
-'''
+
 
 
 
