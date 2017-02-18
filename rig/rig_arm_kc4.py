@@ -1,15 +1,15 @@
 import maya.cmds as cmds
 
 armjntList = (['shoulder', [0, 0, 0]], ['elbow', [-48, 12, 0]], ['wrist', [-96, 0, 0]], ['wristEnd', [-96.001, 0, 0]])
-
+handjntList = []
 
 class Rig_Arm:
 
     def rigArm(self):
         # build those arms
-        armjoint('rig', armjntList)
-        armjoint('ik', armjntList)
-        armjoint('fk', armjntList)
+        self.armjoint('rig', armjntList)
+        self.armjoint('ik', armjntList)
+        self.armjoint('fk', armjntList)
 
         # parent joint chains
         for item in armjntList:
@@ -18,11 +18,11 @@ class Rig_Arm:
             cmds.select(d=True)
 
         # build a hand
-        handjoint(5, 4)
+        self.handjoint(5, 4)
 
         # And this builds the arm contols
-        armControls('fk', armjntList)
-        armControls('ik', armjntList)
+        self.armControls('fk', armjntList)
+        self.armControls('ik', armjntList)
 
         # ----- ARM IKFK SWITCH -----#
         # create controller switch
@@ -38,17 +38,17 @@ class Rig_Arm:
 
         # key IK
         cmds.setAttr('ctl_IKFK_Switch.IK_to_FK_Switch', 10)
-        setkeyIKFK(armjntList, 0, 1)
+        self.setkeyIKFK(armjntList, 0, 1)
         # key FK
         cmds.setAttr('ctl_IKFK_Switch.IK_to_FK_Switch', 0)
-        setkeyIKFK(armjntList, 1, 0)
+        self.setkeyIKFK(armjntList, 1, 0)
 
 
     #----- CREATE ARM SKELETON -----#
 
     #define the base arm function
     print "Use 'ik' or 'fk' as tags only, otherwise joint controls will not generate."
-    def armjoint(tag, jointlist):
+    def armjoint(self, tag, jointlist):
         if tag not in ('rig', 'ik', 'fk'):
             print "You must use 'rig', 'ik', or 'fk' as your tag."
         elif tag in ('rig', 'ik', 'fk'):
@@ -61,8 +61,8 @@ class Rig_Arm:
 
     #----- CREATE HAND SKELETON AND CONTROLS -----#
     #define the hand skeleton. I CAN CONTROL HOW MANY FINGERS AND JOINTS IT HAS!!!! MUAHAHAHAHAHAHAHA!
-    handjntList = []
-    def handjoint(fingers, joints):
+
+    def handjoint(self, fingers, joints):
         #determine what digits are part of the cup hierarchy
         cupped = (float(fingers) + 2) / 2.0
 
@@ -157,7 +157,7 @@ class Rig_Arm:
     #-----BUILD ARM CONTROL SETS-----#
     # This function is absurdly large, but it'll do my FK and IK.
     # I really wish I had 2016 colors to choose from. Later, I'll have the colors based on what side the limb is on.
-    def armControls(tag, jointList):
+    def armControls(self, tag, jointList):
         if tag == 'fk':
             for item in jointList:
                 if item[0] != '*End':
@@ -213,7 +213,7 @@ class Rig_Arm:
     #----- ARM IKFK SWITCH -----#
 
     #def to key parent weights
-    def setkeyIKFK(jointlist, fkval, ikval):
+    def setkeyIKFK(self, jointlist, fkval, ikval):
         for each in jointlist:
             cmds.setAttr('rig_' + each[0] + '_jnt_parentConstraint1.fk_' + each[0] + '_jntW0', fkval)
             cmds.setAttr('rig_' + each[0] + '_jnt_parentConstraint1.ik_' + each[0] + '_jntW1', ikval)
