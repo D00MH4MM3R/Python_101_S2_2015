@@ -42,7 +42,6 @@ class Rig_Arm:
         # build a hand
         self.handjoint(5, 4)
 
-'''
         # And this builds the arm contols
         self.armControls('fk', rig_data['armjnt'])
         self.armControls('ik', rig_data['armjnt'])
@@ -65,20 +64,19 @@ class Rig_Arm:
         # key FK
         cmds.setAttr('ctl_IKFK_Switch.IK_to_FK_Switch', 0)
         self.setkeyIKFK(armjntList, 1, 0)
-'''
 
     #----- CREATE ARM SKELETON -----#
 
     #define the base arm function
     #print "Use 'ik' or 'fk' as tags only, otherwise joint controls will not generate."
-    def armjoint(self, tag, rig_data[armjnt]):
+    def armjoint(self, tag, jointlist):
         if tag not in ('rig', 'ik', 'fk'):
             print "You must use 'rig', 'ik', or 'fk' as your tag."
         elif tag in ('rig', 'ik', 'fk'):
-            for item in rig_data[armjnt]:
-              cmds.joint(n= tag + '_' + rig_data[armjnt] + '_jnt', p=rig_data['pos_arm'])
-        cmds.select(rig_data[armjnt][3])
-        cmds.xform(rig_data[armjnt][3], t=rig_data[positions_arm][2], ws=True)
+            for item in rig_data['armjnt']:
+              cmds.joint(n= tag + '_' + jointlist + '_jnt', p=rig_data['pos_arm'])
+        cmds.select(rig_data['armjnt'][3])
+        cmds.xform(rig_data['armjnt'][3], t= rig_data['pos_arm'][2], ws=True)
         cmds.select(d=True)
 
 
@@ -96,7 +94,11 @@ class Rig_Arm:
                 djname = cmds.joint(n='digit'+ str(i + 1) + '_' + str(j), p = ((-4 * j) - 108, (3 * i) - 6 , 0))
                 j = j+1
                 djXform = cmds.xform(djname, q=True, t=True, ws=True)
-                handjntList.append([djname, djXform])
+                #handjntList.append([djname, djXform])
+                rig_data['handjnt'].append(djname)
+                utils.writeJson(filename, rig_data['handjnt'])
+                rig_data['pos_digit'].append(djXform)
+                utils.writeJson(filename, rig_data['pos_digit'])
                 cmds.rename('rig_' + djname + '_jnt')
         cmds.select('rig_digit*_1_jnt')
         cmds.parent(w=True)
@@ -158,77 +160,79 @@ class Rig_Arm:
                 n = n + 1
             elif f < cupped and item[0] == 'digit' + str(f) + '_1':
                 # joints
-                cmds.parent('rig_digit' + str(f) + '_1_jnt', 'rig_wristEnd_jnt')
+                cmds.parent('rig_digit' + str(f) + '_1_jnt', 'rig_' + rig_data['armjnt'][3] + '_jnt')
                 cmds.select(d=True)
                 # controls
                 cmds.parent('grp_ctl_digit' + str(f) + '_1', 'grp_ctl_hand')
                 cmds.select(d=True)
                 n = n + 1
             elif item[0] == 'cup':
-                cmds.parent('rig_cup_jnt', 'rig_wristEnd_jnt')
+                cmds.parent('rig_cup_jnt', 'rig_' + rig_data['armjnt'][3] + '_jnt')
                 cmds.select(d=True)
                 cmds.parent('grp_ctl_cup', 'grp_ctl_hand')
                 cmds.select(d=True)
                 n = n + 1
         # parent joints to controls
         for item in rig_data['handjnt']:
-            cmds.parentConstraint('ctl_' + item[0], 'rig_' + item[0] + '_jnt', mo=True)
+            cmds.parentConstraint('ctl_' + item, 'rig_' + item + '_jnt', mo=True)
             cmds.select(d=True)
 
         # get rid of end controls (can't get it to skip over them right now without breaking the hierarchy builder)
         cmds.select('grp_ctl_digit' + str(fingers) + '_' + str(joints))
         cmds.delete()
 
+#rig_data['armjnt'] = ['shoulder', 'elbow', 'wrist', 'wristEnd']
 
-'''
     #-----BUILD ARM CONTROL SETS-----#
     # This function is absurdly large, but it'll do my FK and IK.
     # I really wish I had 2016 colors to choose from. Later, I'll have the colors based on what side the limb is on.
     def armControls(self, tag, jointList):
         if tag == 'fk':
             for item in jointList:
-                if item[0] != '*End':
-                    cmds.circle(n='ctl_' + tag + '_' + item[0], r=(10), nr=(1, 0, 0), c=(0, 0, 0))
-                    cmds.group(n='grp_ctl_' + tag + '_' + item[0])
-                    cmds.xform('grp_ctl_' + tag + '_' + item[0], t=item[1], ws=True)
-                    cmds.orientConstraint(tag + '_' + item[0] + '_jnt', 'grp_ctl_' + tag + '_' + item[0])
-                    cmds.delete('grp_ctl_' + tag + '_' + item[0] + '_orientConstraint1')
+                if item != jointList[3]:
+                    cmds.circle(n='ctl_' + tag + '_' + item, r=(10), nr=(1, 0, 0), c=(0, 0, 0))
+                    cmds.group(n='grp_ctl_' + tag + '_' + item)
+                    cmds.xform('grp_ctl_' + tag + '_' + item, t=rig_data['pos_arm'], ws=True)
+                    cmds.orientConstraint(tag + '_' + item + '_jnt', 'grp_ctl_' + tag + '_' + item)
+                    cmds.delete('grp_ctl_' + tag + '_' + item + '_orientConstraint1')
             cmds.select(d=True)
-            cmds.parent('grp_ctl_' + tag + '_wrist', 'ctl_' + tag + '_elbow')
-            cmds.parent('grp_ctl_' + tag + '_elbow', 'ctl_' + tag + '_shoulder')
+            cmds.parent('grp_ctl_' + tag + jointList[2], 'ctl_' + tag + jointList[1])
+            cmds.parent('grp_ctl_' + tag + jointList[1], 'ctl_' + tag + jointList[0])
             # constrain joints to controls
-            cmds.parentConstraint('ctl_fk_shoulder', 'fk_shoulder_jnt')
-            cmds.parentConstraint('ctl_fk_elbow', 'fk_elbow_jnt')
-            cmds.parentConstraint('ctl_fk_wrist', 'fk_wrist_jnt')
+            cmds.parentConstraint('ctl_fk_' + jointList[0], 'fk_' + jointList[0] + '_jnt')
+            cmds.parentConstraint('ctl_fk_' + jointList[1], 'fk_' + jointList[1] + '_jnt')
+            cmds.parentConstraint('ctl_fk_' + jointList[2], 'fk_' + jointList[2] + '_jnt')
             # make it blue
             cmds.color('*ctl_fk*', ud=6)
             #it won't listen and keeps making the end group, so I'm just going to kill it here for now
-            cmds.delete('grp_ctl_fk_wristEnd')
+            cmds.delete('grp_ctl_fk_' + jointList[3])
         elif tag == 'ik':
             for item in jointList:
-                if item[0] == 'wrist':
+                #wrist
+                if item == jointList[2]:
                     #create grouped control
-                    cmds.circle(n='ctl_' + tag + '_' + item[0], r=(10), nr=(1, 0, 0), c=(0, 0, 0), d=1, s=4)
-                    cmds.group(n='grp_ctl_' + tag + '_' + item[0])
+                    cmds.circle(n='ctl_' + tag + '_' + item, r=(10), nr=(1, 0, 0), c=(0, 0, 0), d=1, s=4)
+                    cmds.group(n='grp_ctl_' + tag + '_' + item)
                     #move and orient at location
-                    cmds.xform('grp_ctl_' + tag + '_' + item[0], t=item[1], ws=True)
-                    cmds.orientConstraint(tag + '_' + item[0] + '_jnt', 'grp_ctl_' + tag + '_' + item[0])
-                    cmds.delete('grp_ctl_' + tag + '_' + item[0] + '_orientConstraint1')
-                elif item[0] == 'elbow':
-                    cmds.spaceLocator(n= 'ctl_' + tag + '_' + item[0] +'Aim', p=(0, 0, 0))
+                    cmds.xform('grp_ctl_' + tag + '_' + item, t=rig_data['pos_arm'][2], ws=True)
+                    cmds.orientConstraint(tag + '_' + item + '_jnt', 'grp_ctl_' + tag + '_' + item[0])
+                    cmds.delete('grp_ctl_' + tag + '_' + item + '_orientConstraint1')
+                #elbow
+                elif item[0] == jointList[1]:
+                    cmds.spaceLocator(n= 'ctl_' + tag + '_' + item +'Aim', p=(0, 0, 0))
                     cmds.select('ctl_ik_elbowAim')
                     cmds.scale(15, 15, 15)
-                    cmds.group('ctl_' + tag + '_' + item[0] + 'Aim', n='grp_ctl_' + tag + '_' + item[0] + 'Aim')
+                    cmds.group('ctl_' + tag + '_' + item + 'Aim', n='grp_ctl_' + tag + '_' + item + 'Aim')
             #move to locations and orient, delete orientConstraint
-            cmds.xform('grp_ctl_ik_wrist', t=item[1], ws=True)
+            cmds.xform('grp_ctl_ik_' + rig_data['armjnt'][2] , t=rig_data['pos_arm'][2], ws=True)
             cmds.xform('grp_ctl_ik_elbowAim', t=(-50, 100, 0), ws=True)
-            OC_ikwrist = cmds.orientConstraint('ik_wrist_jnt', 'grp_ctl_ik_wrist')
+            OC_ikwrist = cmds.orientConstraint('ik_' + rig_data['armjnt'][2] + '_jnt', 'grp_ctl_ik_' + rig_data['armjnt'][2])
             cmds.delete(OC_ikwrist)
             # create IK handle, pole vector, then parent
-            cmds.ikHandle(n='ikh_arm', sj='ik_shoulder_jnt', ee='ik_wrist_jnt', w=1, sol='ikRPsolver')
+            cmds.ikHandle(n='ikh_arm', sj='ik_' + rig_data['armjnt'][0] + '_jnt', ee='ik_' + rig_data['armjnt'][2] + '_jnt', w=1, sol='ikRPsolver')
             cmds.poleVectorConstraint('ctl_ik_elbowAim', 'ikh_arm')
-            cmds.parent('ikh_arm', 'ctl_ik_wrist')
-            cmds.parentConstraint('ctl_ik_wrist', 'ik_wristEnd_jnt')
+            cmds.parent('ikh_arm', 'ctl_ik_' + rig_data['armjnt'][2])
+            cmds.parentConstraint('ctl_ik_' + rig_data['armjnt'][2], 'ik_' + rig_data['armjnt'][2] + '_jnt')
             # make it red
             cmds.color('*ctl_ik*', ud=8)
         elif tag not in ('ik', 'fk'):
@@ -242,10 +246,10 @@ class Rig_Arm:
     #def to key parent weights
     def setkeyIKFK(self, jointlist, fkval, ikval):
         for each in jointlist:
-            cmds.setAttr('rig_' + each[0] + '_jnt_parentConstraint1.fk_' + each[0] + '_jntW0', fkval)
-            cmds.setAttr('rig_' + each[0] + '_jnt_parentConstraint1.ik_' + each[0] + '_jntW1', ikval)
-            cmds.setDrivenKeyframe('rig_' + each[0] + '_jnt_parentConstraint1.fk_' + each[0] + '_jntW0',
+            cmds.setAttr('rig_' + each + '_jnt_parentConstraint1.fk_' + each + '_jntW0', fkval)
+            cmds.setAttr('rig_' + each + '_jnt_parentConstraint1.ik_' + each + '_jntW1', ikval)
+            cmds.setDrivenKeyframe('rig_' + each + '_jnt_parentConstraint1.fk_' + each + '_jntW0',
                                    cd='ctl_IKFK_Switch.IK_to_FK_Switch')
-            cmds.setDrivenKeyframe('rig_' + each[0] + '_jnt_parentConstraint1.ik_' + each[0] + '_jntW1',
+            cmds.setDrivenKeyframe('rig_' + each + '_jnt_parentConstraint1.ik_' + each + '_jntW1',
                                    cd='ctl_IKFK_Switch.IK_to_FK_Switch')
 
