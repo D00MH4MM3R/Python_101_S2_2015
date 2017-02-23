@@ -4,7 +4,7 @@ print 'UI active'
 # def function(*args):
 def rigArm(*args):
     #import folder.file as namespace
-    import rig.rig_arm_kc4 as rig_arm
+    import rig.rig_arm_kc5 as rig_arm
     #reload (namespace)
     reload(rig_arm)
     #variable = namespace.class()

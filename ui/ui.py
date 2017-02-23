@@ -1,7 +1,10 @@
-import maya.cmds as cmds
 import os
 from functools import partial
+
+import maya.cmds as cmds
+
 import system.utils as utils
+
 reload(utils)
 
 # The UI class
