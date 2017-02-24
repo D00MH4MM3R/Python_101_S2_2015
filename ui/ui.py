@@ -34,6 +34,15 @@ class RDojo_UI:
 
 	 	self.uiElements['layoutButton'] = cmds.button(l= 'Generate Layout', w = windowWidth, h = buttonHeight/2, c = self.riglayout)
 
+	 	self.uiElements['optionsFrameLayout'] = cmds.frameLayout ("optionsTab", w = windowWidth, label = "Options", cll = True, p = self.uiElements['mainColLayout'])
+	 	cmds.separator( width = windowWidth, style='none')
+	 	self.uiElements['optionsColLayout'] = cmds.rowColumnLayout("optionsColLayout", numberOfColumns = 2, columnWidth = [(1, windowWidth/2), (2, windowWidth/2)])
+
+
+	 	self.uiElements['stretchBox'] = cmds.checkBox( "stretchBox", label = "Stretch")
+	 	self.uiElements['twistBox'] = cmds.checkBox( "twistBox", label = "Twist Joints")
+	 	cmds.separator( width = windowWidth, style='none', h = 10,  p = self.uiElements['optionsColLayout'])
+
 	 	self.uiElements['modFrameLayout'] = cmds.frameLayout ("ModuleTab", w = windowWidth, label = "Modules", cll = True, p = self.uiElements['mainColLayout'])
 	 	self.uiElements['modFlowLayout'] = cmds.flowLayout("moduleFlowLayout", v = False, w = windowWidth, h = windowHeight/2, wr = True)
 
@@ -45,7 +54,7 @@ class RDojo_UI:
 
 	 	cmds.showWindow(self.uiElements['window'])
 
-	def rig_arm(*args):
+	def rig_arm(self, *args):
 		#import the module with an alias
 		import rig.arm_rig as arm_rig
 		reload(arm_rig)
@@ -55,7 +64,7 @@ class RDojo_UI:
 		#excecute the arm bulding function from within the variable that houses the class
 		rig_arm.rig_arm()
 
-	def riglayout(*args):
+	def riglayout(self, *args):
 		import layout.rig_Layout as rig_Layout
 		reload(rig_Layout)
 		ly = rig_Layout.Layout()

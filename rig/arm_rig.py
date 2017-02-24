@@ -1,8 +1,9 @@
 import maya.cmds as cmds
 import maya.OpenMaya as om
 import system.utils as utils
+import system.rig_utils as rig_utils
+import os
 import json
-import collections
 
 class Rig_Arm:
 
@@ -10,8 +11,9 @@ class Rig_Arm:
         self.rig_info = {}
         self.rig_data = {}
         self.layoutPos = {}
-        self.sysPath = 'C:/Users/Mauricio Pachon/Documents/GitHub/Python_101_S2_2015/layout/log.json'
-        self.dataPath = 'C:/Users/Mauricio Pachon/Documents/GitHub/Python_101_S2_2015/layout/data.json'
+        self.stretch = cmds.checkBox('stretchBox', q = True, v = True)
+        self.sysPath =  os.environ["RDOJO_DATA"] + 'layout/log.json'
+        self.dataPath = os.environ["RDOJO_DATA"] + 'layout/data.json'
 
     ## Importing parameters such as names and positions ##
     def importData(self, path):
@@ -21,18 +23,19 @@ class Rig_Arm:
 
     ## Executing the required functions for building the arm ##
     def rig_arm(self):
+        reload(rig_utils)
 
         self.importData(self.dataPath)
 
         self.getCoords()
         
-        self.rig_info['ikJnts'] = self.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][0], self.rig_data['bones'], self.layoutPos)
+        self.rig_info['ikJnts'] = rig_utils.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][0], self.rig_data['bones'], self.layoutPos)
         
-        self.rig_info['fkJnts'] = self.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][1], self.rig_data['bones'], self.layoutPos)
+        self.rig_info['fkJnts'] = rig_utils.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][1], self.rig_data['bones'], self.layoutPos)
         
-        self.rig_info['rigJnts'] = self.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][2], self.rig_data['bones'], self.layoutPos)
+        self.rig_info['rigJnts'] = rig_utils.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][2], self.rig_data['bones'], self.layoutPos)
             
-        self.rig_info['ikArm'] = self.ikSystemCreation(self.rig_info['ikJnts'][0], self.rig_info['ikJnts'][1], self.rig_info['ikJnts'][2], 'arm')
+        self.rig_info['ikArm'] = rig_utils.ikSystemCreation(self.rig_info['ikJnts'][0], self.rig_info['ikJnts'][1], self.rig_info['ikJnts'][2], self.rig_data['ext'][0])
         
         self.rig_info['fkCtrls'] = self.fkSystem(self.rig_info['fkJnts'][0])
         
@@ -40,104 +43,25 @@ class Rig_Arm:
 
         self.cleanUp()
 
+        utils.colOverride(self.rig_data['ext'][0], (self.rig_info['ikArm'][3], self.rig_info['ikArm'][4], self.rig_info['fkCtrls']))
+
+        if self.stretch == 1:
+            self.rig_info['stretchNodes'] = rig_utils.stretchNodes(self.rig_data['prefix'][0], self.rig_info['ikJnts'][0], self.rig_info['ikJnts'][1], self.rig_info['ikJnts'][2], self.rig_info['ikArm'][3], self.rig_info['rigJnts'], self.rig_data['ext'][0])
+
         utils.writeJson(self.sysPath, self.rig_info)
         
     ## Get the positions from the layout objects ##
     def getCoords(self, *args):
-        self.rawCoords = {}
-        layoutObjs = cmds.ls(typ = 'locator')
+        # Select all the layout objects by type#
+        layoutObjs = cmds.ls(typ = 'joint')
         for l in layoutObjs:
-            name = l.split('_')
-            if name[0] == 'armLy':
-                locTrans = cmds.listRelatives(l, p = True)
-                self.rawCoords[locTrans[0]] = cmds.xform(locTrans, q = True, t = True)
-                print locTrans
-        
-        for key, value in self.rawCoords.iteritems():
-            newKey = key.split('_')
-            convertedVal = []
-            for v in value:
-                convertedVal.append(int(v))
-            self.layoutPos[newKey[1]] = convertedVal
-        print self.rawCoords            
-        print self.layoutPos
-        print layoutObjs
-
-        
-
-
-        '''
-        [self.layoutPos[l] = cmds.xform(l, q = True, t = True) if name[0] == 'armLy' for l in layoutObjs]
-        '''
-    ## Creating the joint chains ##
-    def jointCreation(self, prefix, chainTypes, name, position):
-        joints = []
-        for n in name:
-            #For each chain created, it then creates each joint specified in the name argument #
-            joints.append(cmds.joint(n = prefix + '_' + chainTypes + '_' + n + '_jnt', p = position[n]))
-            if name.index(n) != 0:
-                # If the joint isnt the first one, it will orient it's parent #
-                cmds.joint(prefix + '_' + chainTypes + '_' + name[name.index(n)-1] + '_jnt', e = True, zso = True, oj = 'xyz', sao = 'yup')
-        cmds.select(d=True)
-        return joints
-    
-
-    
-    
-    ## Creating the IK Arm ##
-    def ikSystemCreation(self, startJoint, midJoint, endJoint, extremity):
-        # Creating the IK handle    
-        ikH = cmds.ikHandle( sj=startJoint, ee=endJoint, p=2, w=.5, n = extremity + '_ikHandle', sol = 'ikRPsolver')[0]
-        
-        # Creating the IK Arm Control   
-        ikControl = cmds.circle(n = 'ctrl_IK_' + extremity, nr = (1,0,0))[0]
-        ikGroup = cmds.group(ikControl, n = str(ikControl) + '_grp')
-        
-        # Query wrist location and rotation
-        pos = cmds.xform(endJoint, ws = True, q=True, t=True)
-        rot = cmds.xform(endJoint, ws = True, q=True, ro=True)
-        
-        # Snap the group to the wrist joint
-        cmds.xform(ikGroup, t=pos, ws=True)
-        cmds.xform(ikGroup, ro=rot, ws=True)
-        
-        # Constrain the handle to the control, and the control to the wrist rotation
-        cmds.pointConstraint(ikControl, ikH, mo=True)
-        cmds.orientConstraint(ikControl, endJoint, mo=True)
-        
-        # Creating and Positioning PV
-        # Query shoulder Position and Vectors
-        sRaw = cmds.xform(startJoint, q = True, ws = True, t = True)
-        sPos = om.MVector(sRaw[0], sRaw[1], sRaw[2])
-        
-        #Query Elbow Position and Vectors
-        eRaw = cmds.xform(midJoint, q = True, ws = True, t = True)
-        ePos = om.MVector(eRaw[0], eRaw[1], eRaw[2])
-        
-        #Query Wrist Position and Vectors
-        wRaw = cmds.xform(endJoint, q = True, ws = True, t = True)
-        wPos = om.MVector(wRaw[0], wRaw[1], wRaw[2])
-        
-        # Create the control
-        poleVector = cmds.circle(n = 'ctrl_PV_' + extremity, nr = (0,0,1))[0]
-        pvGroup = cmds.group(poleVector, n = str(poleVector) + '_grp')
-        
-        #Calculate the elbow spot and position it behind
-        midpoint = (wPos + sPos)/2
-        
-        #Calculate the Pv Direction
-        pvOrigin = ePos - midpoint
-        
-        pvRaw = pvOrigin * 2
-        
-        pvPos = pvRaw + midpoint
-        
-        cmds.move(pvPos.x, pvPos.y, pvPos.z, pvGroup)
-        
-        # Create PV Constraint
-        cmds.poleVectorConstraint(poleVector, ikH)
-        
-        return ikGroup, pvGroup, ikH, ikControl, poleVector
+            #Check to see if they should be taken into account for the arm#
+            name = l.split('_')[0]
+            if name == 'armLy':
+                #List their transform node and query their position#
+                #locTrans = cmds.listRelatives(l, p = True)[0]
+                name = l.split('_')[1]
+                self.layoutPos[name] = cmds.xform(l, ws = True, q = True, t = True)
     
     
     
@@ -215,3 +139,5 @@ class Rig_Arm:
         cmds.setDrivenKeyframe('ctrl_FK_shoulder_grp.visibility', cd = 'ctrl_IkFk_Switch.ikFk_Switch',  dv = 1, v = 0 )
         cmds.setDrivenKeyframe('ikControls_grp.visibility', cd = 'ctrl_IkFk_Switch.ikFk_Switch',  dv = 1, v = 1 )
         cmds.setDrivenKeyframe('ikControls_grp.visibility', cd = 'ctrl_IkFk_Switch.ikFk_Switch',  dv = 0, v = 0 )
+
+
