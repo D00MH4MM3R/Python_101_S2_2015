@@ -1,5 +1,6 @@
 import maya.cmds as cmds
 import system.utils as utils
+import os
 import json
 
 
@@ -11,7 +12,7 @@ rig_data['pos_arm'] = [[0, 0, 0], [-48, 12, 0], [-96, 0, 0], [-96.001, 0, 0]]
 rig_data['pos_digit'] = []
 
 
-filename = '/Users/Miko/Desktop/DojoClass/Python_101_S2_2015/layout/test.json'
+filename = os.environ['RIGGING_TOOL'] + '/layout/test.json'
 utils.writeJson(filename, rig_data)
 
 newdata = utils.readJson(filename)
@@ -87,38 +88,34 @@ class Rig_Arm:
         cupped = (float(fingers) + 2) / 2.0
 
         #builds the fingers to specs
-        handjntList = []
+        #handjntList = []
         for i in range(fingers):
             j=1
             while j<=joints:
                 djname = cmds.joint(n='digit'+ str(i + 1) + '_' + str(j), p = ((-4 * j) - 108, (3 * i) - 6 , 0))
                 j = j+1
                 djXform = cmds.xform(djname, q=True, t=True, ws=True)
-                handjntList.append([djname, djXform])
-                #rig_data['handjnt'].append(djname)
-                #utils.writeJson(filename, rig_data['handjnt'])
-                #rig_data['pos_digit'].append(djXform)
-                #utils.writeJson(filename, rig_data['pos_digit'])
+                rig_data['handjnt'].append(djname)
+                utils.writeJson(filename, rig_data['handjnt'])
+                rig_data['pos_digit'].append(djXform)
+                utils.writeJson(filename, rig_data['pos_digit'])
                 cmds.rename('rig_' + djname + '_jnt')
         cmds.select('rig_digit*_1_jnt')
         cmds.parent(w=True)
         cmds.select(d=True)
+        respond = utils.readJson(filename)
+        print respond
+
 
         # --make cup jnt and add to handList
         cjname = cmds.joint(n='cup', p=(-106, 4, 0))
         cjXform = cmds.xform(cjname, q=True, t=True, ws=True)
-        #rig_data['handjnt'].append(cjname)
-        #utils.writeJson(filename, rig_data['handjnt'])
-        #rig_data['pos_digit'].append(cjXform)
-        #utils.writeJson(filename, rig_data['pos_digit'])
-        handjntList.append([cjname, cjXform])
-        cmds.rename('rig_' + cjname + '_jnt')
-
-        #--update JSON--#
-        rig_data['handjnt'].append(handjntList[0])
+        rig_data['handjnt'].append(cjname)
         utils.writeJson(filename, rig_data['handjnt'])
-        rig_data['handjnt'].append(handjntList[1])
+        rig_data['pos_digit'].append(cjXform)
         utils.writeJson(filename, rig_data['pos_digit'])
+        #handjntList.append([cjname, cjXform])
+        cmds.rename('rig_' + cjname + '_jnt')
 
         # create the handpin group
         cmds.group(n='grp_ctl_hand', em=True)
@@ -139,6 +136,7 @@ class Rig_Arm:
             cmds.orientConstraint('rig_' + rig_data['handjnt'][i] + '_jnt', 'grp_ctl_' + rig_data['handjnt'][i])
             cmds.delete('grp_ctl_' + rig_data['handjnt'][i] + '_orientConstraint1')
         cmds.select(d=True)
+
         # this builds the hierarchy of the fingers
         for i in range(fingers):
             j = 2
@@ -153,16 +151,10 @@ class Rig_Arm:
         cmds.select(d=True)
 
         # cup hierarchy for joints and controls
-        print 'control hierarchy initiated'
         n=0
-
-        #for each in (rig_data['handjnt']):
-        #    print each
-
         for i in range(len(rig_data['handjnt'])):
-            #print len(rig_data['handjnt']) #--- this is proof that 5 finger/4 jnt has 21 entries. WHY CAN'T I ACCESS THEM?!?!
             f = n + 1
-            if f >= cupped and rig_data['handjnt'][n] == 'digit' + str(f) + '_1':
+            if f >= cupped and rig_data['handjnt'][n] == '*digit' + str(f) + '_1':
                 print rig_data['handjnt'][n] + 'ring or pinky'
                 # joints first
                 cmds.parent('rig_digit' + str(f) + '_1_jnt', 'rig_cup_jnt')
@@ -171,7 +163,7 @@ class Rig_Arm:
                 cmds.parent('grp_ctl_digit' + str(f) + '_1', 'ctl_cup')
                 cmds.select(d=True)
                 n = n + 1
-            elif f < cupped and rig_data['handjnt'][n] == 'digit' + str(f) + '_1':
+            elif f < cupped and rig_data['handjnt'][n] == '*digit' + str(f) + '_1':
                 print rig_data['handjnt'][n] + 'thumb to middle'
                 # joints
                 cmds.parent('rig_digit' + str(f) + '_1_jnt', 'rig_' + rig_data['armjnt'][3] + '_jnt')
@@ -187,6 +179,11 @@ class Rig_Arm:
                 cmds.parent('grp_ctl_cup', 'grp_ctl_hand')
                 cmds.select(d=True)
                 n = n + 1
+
+        print len(rig_data['handjnt'])  # --- this is proof that 5 finger/4 jnt has 21 entries. WHY DON'T THEY WRITE TO JSON?!?!
+        print rig_data['handjnt'] # --- here are all their names. i don't see where the problem's happening
+        utils.writeJson(filename, rig_data['handjnt']
+
         # parent joints to controls
         for i in range(len(rig_data['handjnt'])):
             cmds.parentConstraint('ctl_' + rig_data['handjnt'][i], 'rig_' + rig_data['handjnt'][i] + '_jnt', mo=True)
