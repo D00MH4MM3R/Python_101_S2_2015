@@ -12,17 +12,16 @@ rig_data['pos_digit'] = []
 
 
 filename = '/Users/Miko/Desktop/DojoClass/Python_101_S2_2015/layout/test.json'
-#utils.writeJson(filename, rig_data)
-
+utils.writeJson(filename, rig_data)
 
 newdata = utils.readJson(filename)
 print newdata
 
 
-info = json.loads( newdata )
-for key, value in info.iteritems():
-    print key
-    print value
+#info = json.loads( newdata )
+#for key, value in info.iteritems(newdata):
+#    print key
+#    print value
 
 
 
@@ -60,10 +59,10 @@ class Rig_Arm:
 
         # key IK
         cmds.setAttr('ctl_IKFK_Switch.IK_to_FK_Switch', 10)
-        self.setkeyIKFK(armjntList, 0, 1)
+        self.setkeyIKFK(rig_data['armjnt'], 0, 1)
         # key FK
         cmds.setAttr('ctl_IKFK_Switch.IK_to_FK_Switch', 0)
-        self.setkeyIKFK(armjntList, 1, 0)
+        self.setkeyIKFK(rig_data['armjnt'], 1, 0)
 
     #----- CREATE ARM SKELETON -----#
 
@@ -71,12 +70,12 @@ class Rig_Arm:
     #print "Use 'ik' or 'fk' as tags only, otherwise joint controls will not generate."
     def armjoint(self, tag, jointlist):
         if tag not in ('rig', 'ik', 'fk'):
-            print "You must use 'rig', 'ik', or 'fk' as your tag."
+                print "You must use 'rig', 'ik', or 'fk' as your tag."
         elif tag in ('rig', 'ik', 'fk'):
-            for item in rig_data['armjnt']:
-              cmds.joint(n= tag + '_' + jointlist + '_jnt', p=rig_data['pos_arm'])
-        cmds.select(rig_data['armjnt'][3])
-        cmds.xform(rig_data['armjnt'][3], t= rig_data['pos_arm'][2], ws=True)
+            for i in range(len(jointlist)):
+                cmds.joint(n= tag + '_' + str(jointlist[i]) + '_jnt', p=rig_data['pos_arm'][i])
+        cmds.select('rig_' + rig_data['armjnt'][3] + '_jnt')
+        cmds.xform('rig_' + rig_data['armjnt'][3] + '_jnt', t= rig_data['pos_arm'][2], ws=True)
         cmds.select(d=True)
 
 
@@ -88,17 +87,18 @@ class Rig_Arm:
         cupped = (float(fingers) + 2) / 2.0
 
         #builds the fingers to specs
+        handjntList = []
         for i in range(fingers):
             j=1
             while j<=joints:
                 djname = cmds.joint(n='digit'+ str(i + 1) + '_' + str(j), p = ((-4 * j) - 108, (3 * i) - 6 , 0))
                 j = j+1
                 djXform = cmds.xform(djname, q=True, t=True, ws=True)
-                #handjntList.append([djname, djXform])
-                rig_data['handjnt'].append(djname)
-                utils.writeJson(filename, rig_data['handjnt'])
-                rig_data['pos_digit'].append(djXform)
-                utils.writeJson(filename, rig_data['pos_digit'])
+                handjntList.append([djname, djXform])
+                #rig_data['handjnt'].append(djname)
+                #utils.writeJson(filename, rig_data['handjnt'])
+                #rig_data['pos_digit'].append(djXform)
+                #utils.writeJson(filename, rig_data['pos_digit'])
                 cmds.rename('rig_' + djname + '_jnt')
         cmds.select('rig_digit*_1_jnt')
         cmds.parent(w=True)
@@ -107,16 +107,22 @@ class Rig_Arm:
         # --make cup jnt and add to handList
         cjname = cmds.joint(n='cup', p=(-106, 4, 0))
         cjXform = cmds.xform(cjname, q=True, t=True, ws=True)
-        rig_data['handjnt'].append(cjname)
-        utils.writeJson(filename, rig_data['handjnt'])
-        rig_data['pos_digit'].append(cjXform)
-        utils.writeJson(filename, rig_data['pos_digit'])
-        ##handjntList.append([cjname, cjXform])
+        #rig_data['handjnt'].append(cjname)
+        #utils.writeJson(filename, rig_data['handjnt'])
+        #rig_data['pos_digit'].append(cjXform)
+        #utils.writeJson(filename, rig_data['pos_digit'])
+        handjntList.append([cjname, cjXform])
         cmds.rename('rig_' + cjname + '_jnt')
+
+        #--update JSON--#
+        rig_data['handjnt'].append(handjntList[0])
+        utils.writeJson(filename, rig_data['handjnt'])
+        rig_data['handjnt'].append(handjntList[1])
+        utils.writeJson(filename, rig_data['pos_digit'])
 
         # create the handpin group
         cmds.group(n='grp_ctl_hand', em=True)
-        xfer = cmds.xform(rig_data['armjnt'][2], q=True, t=True, ws=True)
+        xfer = cmds.xform('rig_' + rig_data['armjnt'][2] + '_jnt', q=True, t=True, ws=True)
         cmds.xform('grp_ctl_hand', t=xfer, ws=True)
         cmds.select(d=True)
         # fill pin group, bind to rig hand
@@ -125,13 +131,13 @@ class Rig_Arm:
         cmds.parentConstraint('rig_' + rig_data['armjnt'][3] +'_jnt', 'grp_ctl_hand', mo=True)
 
         #this builds the controls
-        for item in rig_data['handjnt']:
-            cmds.circle(n='ctl_' + rig_data['handjnt'], r=(2), nr=(1, 0, 0), c=(0, 0, 0))
-            cmds.group(n='SDK_grp_ctl_' + rig_data['handjnt'])
-            cmds.group(n='grp_ctl_' + rig_data['handjnt'])
-            cmds.xform('grp_ctl_' + rig_data['handjnt'], t=item[1], ws=True)
-            cmds.orientConstraint('rig_' + rig_data['handjnt'] + '_jnt', 'grp_ctl_' + rig_data['handjnt'])
-            cmds.delete('grp_ctl_' + rig_data['handjnt'] + '_orientConstraint1')
+        for i in range(len(rig_data['handjnt'])):
+            cmds.circle(n='ctl_' + rig_data['handjnt'][i], r=(2), nr=(1, 0, 0), c=(0, 0, 0))
+            cmds.group(n='SDK_grp_ctl_' + rig_data['handjnt'][i])
+            cmds.group(n='grp_ctl_' + rig_data['handjnt'][i])
+            cmds.xform('grp_ctl_' + rig_data['handjnt'][i], t=rig_data['pos_digit'][i], ws=True)
+            cmds.orientConstraint('rig_' + rig_data['handjnt'][i] + '_jnt', 'grp_ctl_' + rig_data['handjnt'][i])
+            cmds.delete('grp_ctl_' + rig_data['handjnt'][i] + '_orientConstraint1')
         cmds.select(d=True)
         # this builds the hierarchy of the fingers
         for i in range(fingers):
@@ -147,10 +153,17 @@ class Rig_Arm:
         cmds.select(d=True)
 
         # cup hierarchy for joints and controls
+        print 'control hierarchy initiated'
         n=0
-        for item in rig_data['handjnt']:
+
+        #for each in (rig_data['handjnt']):
+        #    print each
+
+        for i in range(len(rig_data['handjnt'])):
+            #print len(rig_data['handjnt']) #--- this is proof that 5 finger/4 jnt has 21 entries. WHY CAN'T I ACCESS THEM?!?!
             f = n + 1
-            if f >= cupped and item[0] == 'digit' + str(f) + '_1':
+            if f >= cupped and rig_data['handjnt'][n] == 'digit' + str(f) + '_1':
+                print rig_data['handjnt'][n] + 'ring or pinky'
                 # joints first
                 cmds.parent('rig_digit' + str(f) + '_1_jnt', 'rig_cup_jnt')
                 cmds.select(d=True)
@@ -158,7 +171,8 @@ class Rig_Arm:
                 cmds.parent('grp_ctl_digit' + str(f) + '_1', 'ctl_cup')
                 cmds.select(d=True)
                 n = n + 1
-            elif f < cupped and item[0] == 'digit' + str(f) + '_1':
+            elif f < cupped and rig_data['handjnt'][n] == 'digit' + str(f) + '_1':
+                print rig_data['handjnt'][n] + 'thumb to middle'
                 # joints
                 cmds.parent('rig_digit' + str(f) + '_1_jnt', 'rig_' + rig_data['armjnt'][3] + '_jnt')
                 cmds.select(d=True)
@@ -166,15 +180,16 @@ class Rig_Arm:
                 cmds.parent('grp_ctl_digit' + str(f) + '_1', 'grp_ctl_hand')
                 cmds.select(d=True)
                 n = n + 1
-            elif item[0] == 'cup':
+            elif rig_data['handjnt'][n] == 'cup':
+                print rig_data['handjnt'][n] + 'cup'
                 cmds.parent('rig_cup_jnt', 'rig_' + rig_data['armjnt'][3] + '_jnt')
                 cmds.select(d=True)
                 cmds.parent('grp_ctl_cup', 'grp_ctl_hand')
                 cmds.select(d=True)
                 n = n + 1
         # parent joints to controls
-        for item in rig_data['handjnt']:
-            cmds.parentConstraint('ctl_' + item, 'rig_' + item + '_jnt', mo=True)
+        for i in range(len(rig_data['handjnt'])):
+            cmds.parentConstraint('ctl_' + rig_data['handjnt'][i], 'rig_' + rig_data['handjnt'][i] + '_jnt', mo=True)
             cmds.select(d=True)
 
         # get rid of end controls (can't get it to skip over them right now without breaking the hierarchy builder)
@@ -188,16 +203,16 @@ class Rig_Arm:
     # I really wish I had 2016 colors to choose from. Later, I'll have the colors based on what side the limb is on.
     def armControls(self, tag, jointList):
         if tag == 'fk':
-            for item in jointList:
-                if item != jointList[3]:
-                    cmds.circle(n='ctl_' + tag + '_' + item, r=(10), nr=(1, 0, 0), c=(0, 0, 0))
-                    cmds.group(n='grp_ctl_' + tag + '_' + item)
-                    cmds.xform('grp_ctl_' + tag + '_' + item, t=rig_data['pos_arm'], ws=True)
-                    cmds.orientConstraint(tag + '_' + item + '_jnt', 'grp_ctl_' + tag + '_' + item)
-                    cmds.delete('grp_ctl_' + tag + '_' + item + '_orientConstraint1')
+            for i in range(len(jointList)):
+                if jointList[i] != jointList[3]:
+                    cmds.circle(n='ctl_' + tag + '_' + jointList[i], r=(10), nr=(1, 0, 0), c=(0, 0, 0))
+                    cmds.group(n='grp_ctl_' + tag + '_' + jointList[i])
+                    cmds.xform('grp_ctl_' + tag + '_' + jointList[i], t=rig_data['pos_arm'][i], ws=True)
+                    cmds.orientConstraint(tag + '_' + jointList[i] + '_jnt', 'grp_ctl_' + tag + '_' + jointList[i])
+                    cmds.delete('grp_ctl_' + tag + '_' + jointList[i] + '_orientConstraint1')
             cmds.select(d=True)
-            cmds.parent('grp_ctl_' + tag + jointList[2], 'ctl_' + tag + jointList[1])
-            cmds.parent('grp_ctl_' + tag + jointList[1], 'ctl_' + tag + jointList[0])
+            cmds.parent('grp_ctl_' + tag + '_' + jointList[2], 'ctl_' + tag + '_' + jointList[1])
+            cmds.parent('grp_ctl_' + tag + '_' + jointList[1], 'ctl_' + tag + '_' + jointList[0])
             # constrain joints to controls
             cmds.parentConstraint('ctl_fk_' + jointList[0], 'fk_' + jointList[0] + '_jnt')
             cmds.parentConstraint('ctl_fk_' + jointList[1], 'fk_' + jointList[1] + '_jnt')
@@ -205,34 +220,34 @@ class Rig_Arm:
             # make it blue
             cmds.color('*ctl_fk*', ud=6)
             #it won't listen and keeps making the end group, so I'm just going to kill it here for now
-            cmds.delete('grp_ctl_fk_' + jointList[3])
+            #cmds.delete('grp_ctl_fk_' + jointList[3])
         elif tag == 'ik':
-            for item in jointList:
+            for i in range(len(jointList)):
                 #wrist
-                if item == jointList[2]:
+                if jointList[i] == jointList[2]:
                     #create grouped control
-                    cmds.circle(n='ctl_' + tag + '_' + item, r=(10), nr=(1, 0, 0), c=(0, 0, 0), d=1, s=4)
-                    cmds.group(n='grp_ctl_' + tag + '_' + item)
+                    cmds.circle(n='ctl_' + tag + '_' + jointList[i], r=(10), nr=(1, 0, 0), c=(0, 0, 0), d=1, s=4)
+                    cmds.group(n='grp_ctl_' + tag + '_' + jointList[i])
                     #move and orient at location
-                    cmds.xform('grp_ctl_' + tag + '_' + item, t=rig_data['pos_arm'][2], ws=True)
-                    cmds.orientConstraint(tag + '_' + item + '_jnt', 'grp_ctl_' + tag + '_' + item[0])
-                    cmds.delete('grp_ctl_' + tag + '_' + item + '_orientConstraint1')
+                    cmds.xform('grp_ctl_' + tag + '_' + jointList[i], t=rig_data['pos_arm'][2], ws=True)
+                    cmds.orientConstraint(tag + '_' + jointList[i] + '_jnt', 'grp_ctl_' + tag + '_' + jointList[i])
+                    cmds.delete('grp_ctl_' + tag + '_' + jointList[i] + '_orientConstraint1')
                 #elbow
-                elif item[0] == jointList[1]:
-                    cmds.spaceLocator(n= 'ctl_' + tag + '_' + item +'Aim', p=(0, 0, 0))
+                elif jointList[i] == jointList[1]:
+                    cmds.spaceLocator(n= 'ctl_' + tag + '_' + jointList[i] +'Aim', p=(0, 0, 0))
                     cmds.select('ctl_ik_elbowAim')
                     cmds.scale(15, 15, 15)
-                    cmds.group('ctl_' + tag + '_' + item + 'Aim', n='grp_ctl_' + tag + '_' + item + 'Aim')
+                    cmds.group('ctl_' + tag + '_' + jointList[i] + 'Aim', n='grp_ctl_' + tag + '_' + jointList[i] + 'Aim')
             #move to locations and orient, delete orientConstraint
             cmds.xform('grp_ctl_ik_' + rig_data['armjnt'][2] , t=rig_data['pos_arm'][2], ws=True)
             cmds.xform('grp_ctl_ik_elbowAim', t=(-50, 100, 0), ws=True)
             OC_ikwrist = cmds.orientConstraint('ik_' + rig_data['armjnt'][2] + '_jnt', 'grp_ctl_ik_' + rig_data['armjnt'][2])
             cmds.delete(OC_ikwrist)
             # create IK handle, pole vector, then parent
-            cmds.ikHandle(n='ikh_arm', sj='ik_' + rig_data['armjnt'][0] + '_jnt', ee='ik_' + rig_data['armjnt'][2] + '_jnt', w=1, sol='ikRPsolver')
+            cmds.ikHandle(n='ikh_arm', sj='ik_' + rig_data['armjnt'][0] + '_jnt', ee= 'ik_' + rig_data['armjnt'][2] + '_jnt', w=1, sol='ikRPsolver')
             cmds.poleVectorConstraint('ctl_ik_elbowAim', 'ikh_arm')
             cmds.parent('ikh_arm', 'ctl_ik_' + rig_data['armjnt'][2])
-            cmds.parentConstraint('ctl_ik_' + rig_data['armjnt'][2], 'ik_' + rig_data['armjnt'][2] + '_jnt')
+            cmds.parentConstraint('ctl_ik_' + rig_data['armjnt'][2], 'ik_' + rig_data['armjnt'][3] + '_jnt')
             # make it red
             cmds.color('*ctl_ik*', ud=8)
         elif tag not in ('ik', 'fk'):
@@ -253,3 +268,13 @@ class Rig_Arm:
             cmds.setDrivenKeyframe('rig_' + each + '_jnt_parentConstraint1.ik_' + each + '_jntW1',
                                    cd='ctl_IKFK_Switch.IK_to_FK_Switch')
 
+
+    #-----update JSON-----#
+    # except that it doesn't apparently and it's making it very difficult to track down why my digits can't seem to build hierarchies.
+'''
+
+    #filename = '/Users/Miko/Desktop/DojoClass/Python_101_S2_2015/layout/test.json'
+    utils.writeJson(filename, rig_data)
+
+    print newdata
+'''
