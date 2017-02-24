@@ -1,8 +1,7 @@
 # rig_arm.py
 # @author: TOMG
 # @reason: RiggingDojo
-# @modified: 2/12/2017
-# TODO : general refactoring and cleanup
+# @modified: 2/23/2017
 # TODO : Mathify PoleVector Placements; set PV root position via config; Fix IK setup in general <see legs>
 # TODO : Get the IKFK switch / BlendColor Node hooked up one of these days
 # TODO : Find elegant solution for mirror axis
@@ -11,10 +10,9 @@
 
 import maya.cmds as cmds
 import system.utils as utils
-import maya.OpenMaya as om
-import os
 
 print "We Have Imported RIG_ARM"
+
 
 class RigArm(object):
     def __init__(self):
@@ -23,182 +21,30 @@ class RigArm(object):
 
     def rig_arm(self, jsonRigData):
         print "commencing rig... ", self
-        for pfx in jsonRigData['prefix']:
-            for chain in jsonRigData['chains']:
-                chainData = jsonRigData['chains'][chain]
+        for chain in jsonRigData['chains']:
+            chainData = jsonRigData['chains'][chain]
+            #completedChains = {}
+            completedChains = []
 
+            for pfx in jsonRigData['prefix']:
                 # short circuit if we already established we don't want to build the current chain
-                #if chainData['use_ik'] is False and pfx.lower() == 'ik':
-                #    continue
-                #if chainData['use_fk'] is False and pfx.lower() == 'fk':
-                #    continue
+                if chainData['use_ik'] is False and pfx.lower() == 'ik':
+                    continue
+                if chainData['use_fk'] is False and pfx.lower() == 'fk':
+                    continue
 
                 if chainData['use_mirror'] == True:
                     for mName in jsonRigData['mirrorName']:
-                        self.ConstructJointChain(pfx, chain, chainData, mName)
+                        completedChains.append(utils.ConstructJointChain(pfx, chain, chainData, mName))
                 else:
-                    self.ConstructJointChain(pfx, chain, chainData)
+                    completedChains.append(utils.ConstructJointChain(pfx, chain, chainData))
 
-
-    def ConstructJointChain(self, prefix='', chain='', chainData=None, mirrorNaming=None):
-        # start a new chain
-        chainJoints = []
-        cmds.select(cl=True)
-
-        for jnt in chainData['joints']:
-            ikhName = ''
-            newJointName = ''
-            # newJointPos = []
-            newJointPos = jnt['position']
-
-            if mirrorNaming:
-                ikhName = '{0}_{1}'.format(mirrorNaming, chain)
-                newJointName = '{0}_{1}_{2}_{3}'.format(prefix, mirrorNaming, jnt['name'], 'jnt')
-                if 'r' in mirrorNaming.lower():
-                    newJointPos = [(jnt['position'][0] * -1.0), jnt['position'][1], jnt['position'][2]]  # mirroring in X only for now, assuming that Left values are provided first
-            else:
-                ikhName = chain
-                newJointName = '{0}_{1}_{2}'.format(prefix, jnt['name'], 'jnt')
-                # newJointPos = jnt['position']
-
-            # print newJointName, newJointPos
-            newJoint = cmds.joint(n=newJointName, p=newJointPos)
-            chainJoints.append(newJoint)
-
-        # chain completed - build controllers, IK Handles, Switches, etc...
-        if chainData['use_ik'] and prefix.lower() == 'ik':
-            # print "BUILDING IK"
-            self.CreateIKController(handleName=ikhName, startJoint=chainJoints[0], endJoint=chainJoints[-1], alignment=chainData['ctrl_alignment'])
-            self.CreatePoleVector(handleName=ikhName, alignmentJoints=chainJoints)
-
-        if chainData['use_fk'] and prefix.lower() == 'fk':
-            # print "BUILDING FK"
-            self.CreateFKController(chainJoints, chainData['ctrl_alignment'])
-
-        if prefix.lower() == 'rig':
-            self.AttachToBaseRig(chainJoints)
-
-
-    def CreateIKController(self, handleName='', startJoint='', endJoint='', solverType='ikRPsolver', alignment=(0, 0, 0)):
-        # setup temp vars
-        # ikStartJoint = str('ik_' + startJoint + '_jnt')
-        # ikEndJoint = str('ik_' + endJoint + '_jnt')
-        ikGroup = str('grp_ctrl_' + endJoint)
-        ikControl = str('ctrl_' + endJoint)
-        ikHandleName = str('ikh_' + handleName)
-
-        cmds.ikHandle(n=ikHandleName, sj=startJoint, ee=endJoint, sol=solverType, p=2, w=1)
-        # Create IK Control
-        pos = cmds.xform(endJoint, q=True, t=True, ws=True)
-        cmds.group(em=True, name=ikGroup)
-
-        cmds.circle(n=ikControl, nr=alignment, c=(0, 0, 0), r=1.5)
-        utils.SetCustomColor(objectName=ikControl, rgb=[1.0, 1.0, 0.0])
-
-        cmds.parent(ikControl, ikGroup)
-        cmds.xform(ikGroup, t=pos, ws=True)
-        cmds.parent(ikHandleName, ikControl)
-
-
-    def CreatePoleVector(self, handleName='', alignmentJoints=[]):
-        # TODO :: Math it up a little more in here
-        pvControl = str('ctrl_pv_' + handleName)
-        t_handleName = str('ikh_' + handleName)
-
-        pos = self.CalculatePVPosition(alignmentJoints)
-        # cmds.group(em=True, name=pvGroup)
-
-        # make a shape, nudge it around, freeze transforms, deleteHistory
-        cmds.cone(n=pvControl, r=0.5)
-        #cmds.circle(n=pvControl, nr=(0, 0, 0), c=(0, 0, 0), r=0.5)
-        utils.SetCustomColor(objectName=pvControl, rgb=[0.0, 1.0, 0.0])
-
-        cmds.xform(pvControl, t=pos, roo='xyz', ro=(0, 90, 0))
-        cmds.makeIdentity(pvControl, apply=True, t=1, r=1, s=1, n=0, pn=1)
-        cmds.delete(ch=True)
-
-        # make a pole vector
-        cmds.poleVectorConstraint(pvControl, t_handleName, w=1.0)
-
-    def CalculatePVPosition(self, joints):
-        start = cmds.xform(joints[0], q=True, ws=True, t=True)
-        mid = cmds.xform(joints[1], q=True, ws=True, t=True)
-        end = cmds.xform(joints[2], q=True, ws=True, t=True)
-
-        startV = om.MVector(start[0], start[1], start[2])
-        midV = om.MVector(mid[0], mid[1], mid[2])
-        endV = om.MVector(end[0], end[1], end[2])
-
-        startEnd = endV - startV
-        startMid = midV - startV
-
-        dotP = startMid * startEnd
-
-        proj = float(dotP)/float(startEnd.length())
-
-        startEndN = startEnd.normal()
-
-        projV = startEndN * proj
-        arrowV = startMid - projV
-        arrowV *= 2.5
-        finalV = arrowV + midV
-
-        return ([finalV.x, finalV.y, finalV.z])
-
-
-    def CreateFKController(self, joints=None, alignment=(0, 0, 0)):
-        # proceed if we have at least 1 joint to operate on
-        if len(joints) > 0:
-            for j in range(len(joints) - 1):
-                # setup temp vars
-                fkJointName = joints[j]  # str('fk_' + joints[j] + '_jnt')
-                fkGroup = str('grp_ctrl_' + joints[j])
-                fkControl = str('ctrl_' + joints[j])
-
-                pos = cmds.xform(fkJointName, q=True, t=True, ws=True)
-                cmds.group(em=True, name=fkGroup)
-
-                cmds.circle(n=fkControl, nr=alignment, c=(0, 0, 0))
-                utils.SetCustomColor(objectName=fkControl, rgb=[1.0, 0.0, 0.0])
-
-                cmds.parent(fkControl, fkGroup)
-                cmds.xform(fkGroup, t=pos, ws=True)
-
-                # orient constrain joint to controller
-                cmds.orientConstraint(fkControl, fkJointName, w=1.0)
-
-                if j != 0:
-                    # parent currentGroup to previousControl ... if we're not the first one
-                    previousControl = str('ctrl_' + joints[j - 1])
-                    cmds.parent(fkGroup, previousControl)
-        else:
-            print "Joint List must contain at least ONE entry - are you sure you're passing in the right list?"
-
-
-    def AttachToBaseRig(self, joints=None):
-        if joints:
-            jointCount = len(joints)
-            for i in range(0, jointCount):
-                # setup temp vars
-                fkJointName = joints[i].replace('rig', 'fk')
-                ikJointName = joints[i].replace('rig', 'ik')
-                rigJointName = joints[i]
-
-                print "CONNECTING: ", fkJointName, ikJointName, rigJointName
-                # doCreateParentConstraintArgList 1 { "1","0","0","0","0","0","0","1","","1" }; <--- actually necessary?
-                cmds.parentConstraint(fkJointName, ikJointName, rigJointName, mo=True, w=1)
-        else:
-            print "Joint List must contain at least ONE entry - are you sure you're passing in the right list?"
+            utils.AttachToBaseRig(completedChains, chainData['use_mirror'])
 
 
     def DebugPrint(self):
         print "Hello: ", self
 
-
-# jsonFilePath = os.path.join( os.environ['RIGGING_TOOL'], 'layout', 'layout.json' )
-# _jsonRigData = utils.readJson(jsonFilePath)
-# myClass = RigArm()
-# myClass.rig_arm(_jsonRigData)
 
 '''
 # declare a data structure, fill it with useful information
@@ -288,4 +134,5 @@ _jointData = {
 }
 jsonFilePath = os.path.join( os.environ['RIGGING_TOOL'], 'layout', 'layout.json' )
 utils.writeJson(jsonFilePath, _jointData)
+# _jsonRigData = utils.readJson(jsonFilePath)
 '''
