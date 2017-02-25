@@ -13,7 +13,7 @@ pm.currentUnit(linear='cm')
 # Checking OS
 plat = platform.system()
 if plat == 'Windows':
-	fileName = os.environ['DATA_PATH'] = 'C:/Users/rhondaray/Documents/GitHub/Python_101_S2_2015/data/rig'
+	fileName = os.environ['DATA_PATH'] = os.environ['RIGGING_TOOL'] + '/data/rig'
 elif plat == 'Darwin':
 	fileName = os.environ['DATA_PATH']
 
