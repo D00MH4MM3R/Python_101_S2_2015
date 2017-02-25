@@ -12,24 +12,20 @@ import system.utils as utils
 import json
 import os
 
-print 'Starting IK-FK Arm Rig...'
-
 
 class RigArm():
+	print 'Starting IK-FK Arm Rig...'
 
 	def __init__(self):
-		fileName = os.environ['DATA_PATH'] + 'data.json'
-		self.rigInfo = json.loads(utils.readJson(fileName))
-	 
-		self.keyNames = self.rigInfo.get('keyNames')
-		# index 0 = bodyPlacement, index 1 = jntType, index 2 = jnts, index 3 = ikCtrls
-		# index 4 = fkCtrls, index 5 = ctrlGrps, index 6 = jntPos
+		print 'processing init'
 
-		self.bodySide = self.rigInfo.get('bodyPlacement')
+		fileName = os.environ['DATA_PATH'] + 'arm.json'
+		self.rigInfo = json.loads(utils.readJson(fileName))
+		self.keyNames = self.rigInfo.get('keyNames')
+		# index 0 = jnts, index 1 = ikCtrls, index 2 = fkCtrls, index 3 = ctrlGrps, index 4 = jntPos
 
 
 	def createRig(self):
-		print 'starting create rig...'
 		self.createJoint('both')
 		self.createIK('both')
 		self.createFK('both')
@@ -45,36 +41,14 @@ class RigArm():
 		jntList = self.rigInfo.get(self.keyNames[2])
 		posList = self.rigInfo.get(self.keyNames[6])
 
-		# createSide is used for the left arm and mirrorSide is used for the right arm
+		# createSide is used for the left side and mirrorSide is used for the right side
 		if sides == 'both':
-			self.createSide(ikfkList, jntList, posList)
-			self.mirrorSide(ikfkList, jntList, posList)
+			utils.createSide(self, ikfkList, jntList, posList)
+			utils.mirrorSide(self, ikfkList, jntList, posList)
 		elif sides == 'left':
-			self.createSide(ikfkList, jntList, posList)
+			utils.createSide(self, ikfkList, jntList, posList)
 		else:
-			self.mirrorSide(ikfkList, jntList, posList)
-
-
-	def createSide(self, ikfkList, jntList, posList):
-		# used to create the left arm
-		for item in ikfkList:
-			for j in range(len(jntList)):
-				jntName = self.bodySide[0]+item+jntList[j]
-				pm.joint(name=jntName, position=posList[j], radius=.5)
-
-			pm.select(deselect=True)	
-
-
-	def mirrorSide(self, ikfkList, jntList, posList):
-		# used to create the right arm
-		for item in ikfkList:
-			for j in range(len(jntList)):
-				jntName = self.bodySide[1]+item+jntList[j]
-				if posList[j][0] > 0:
-					posList[j][0] = posList[j][0] * -1
-				pm.joint(name=jntName, position=posList[j], radius=.5, orientation=(180,0,0))
-
-			pm.select(deselect=True)	
+			utils.mirrorSide(self, ikfkList, jntList, posList)
 
 
 	def createIK(self, sides):
@@ -87,7 +61,7 @@ class RigArm():
 
 	def ikSetup(self, side):
 		# create IK handle
-		ikName = self.searchControls('ikh', 'ik')
+		ikName = utils.searchControls(self, 'ikh', 'ik')
 		ikName = side+ikName
 		pm.ikHandle(name=ikName, startJoint=side+'ik_shoulder_jnt', endEffector=side+'ik_wrist_jnt', solver='ikRPsolver', priority=2, weight=1)
 
@@ -95,11 +69,11 @@ class RigArm():
 		posWrist = pm.xform(side+'ik_wrist_jnt', query=True, translation=True, worldSpace=True)
 
 		# create an empty group and orient to wrist
-		grpName = side+self.searchGroups('ikWrist')
+		grpName = side+utils.searchGroups(self, 'ikWrist')
 		pm.group(empty=True, name=grpName)
 		
 		# create square control
-		ctrlName = side+self.searchControls('Wrist', 'ik')
+		ctrlName = side+utils.searchControls(self, 'Wrist', 'ik')
 		ctrl = cShape.square(self, ctrlName)
 
 		# parent control to group
@@ -110,28 +84,6 @@ class RigArm():
 
 		# parent ik handle to wrist control
 		pm.parent(ikName, ctrl)
-
-		
-	def searchControls(self, strName, ikfk):
-		# find the control in the ik controls list
-		# get list of ik controls from rig info
-		if ikfk == 'ik':
-			ctrls = self.rigInfo.get(self.keyNames[3])
-		else:
-			ctrls = self.rigInfo.get(self.keyNames[4])
-	
-		# get the index of the list item that has the string name as a substring
-		indx = [idx for idx, s in enumerate(ctrls) if strName in s][0]
-		return ctrls[indx]
-
-
-	def searchGroups(self, strName):
-		# find the control group in the group list
-		# get list of groups from rig info
-		grps = self.rigInfo.get(self.keyNames[5])
-	
-		indx = [idx for idx, s in enumerate(grps) if strName in s][0]
-		return grps[indx]
 
 
 	def createFK(self, sides):
@@ -157,10 +109,10 @@ class RigArm():
 			jntName = 'fk' + jnt.split('_')[2].title()
 
 			# create group from joint name
-			grpName = side+self.searchGroups(jntName)
+			grpName = side+utils.searchGroups(self, jntName)
 			grp = pm.group(name=grpName, empty=True)
 
-			ctrlName = self.searchControls(jntName, 'fk')
+			ctrlName = utils.searchControls(self, jntName, 'fk')
 			ctrl = cShape.circle(self, ctrlName)
 			
 			# parent control to grp
@@ -188,7 +140,7 @@ class RigArm():
 		pm.select(side+'fk_shoulder_jnt', add=True)
 		pm.select(side+'ik_shoulder_jnt', add=True)
 
-		grpName = side+self.searchGroups('arm')
+		grpName = side+utils.searchGroups(self, 'arm')
 		pm.group(name=grpName)
 
 		# select same joint from each arm and add orient constraint
@@ -220,7 +172,7 @@ class RigArm():
 		pm.setAttr('lctr_PV_arm.tz', posElbow[2] - 5)
 
 		# create pole vector control
-		ctrlName = side+self.searchControls('PV', 'ik')
+		ctrlName = side+utils.searchControls(self, 'PV', 'ik')
 		ctrl = cShape.pointer(self, ctrlName)
 
 		# move control to locator position
@@ -244,7 +196,7 @@ class RigArm():
 
 	def switchSetup(self, side):
 		# creates text for IK/FK switch 
-		ctrlName = side+self.searchControls('Hand', 'ik')
+		ctrlName = side+utils.searchControls(self, 'Hand', 'ik')
 		ctrl = cShape.text(self, ctrlName, 'switch')
 
 		# rename control
@@ -279,4 +231,4 @@ class RigArm():
 
 
 
-print 'end of script'
+	print 'end of script'
