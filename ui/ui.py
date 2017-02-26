@@ -81,7 +81,7 @@ class RDojo_UI:
 	
 	def item_changed(self, itemName, *args):
 		print 'change command item = ', itemName
-		val = pm.optionMenu(self.UIElements[itemName], query=True, value=True)
+		val = pm.optionMenu(self.uiElements[itemName], query=True, value=True)
 		print 'value = ', val
 
  
