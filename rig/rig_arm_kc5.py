@@ -13,7 +13,10 @@ rig_data['pos_digit'] = []
 
 
 filename = os.environ['RIGGING_TOOL'] + '/layout/test.json'
-utils.writeJson(filename, rig_data)
+if not os.path.exists(filename):
+    print "False"
+else:
+    utils.writeJson(filename, rig_data)
 
 newdata = utils.readJson(filename)
 print newdata
@@ -23,7 +26,6 @@ print newdata
 #for key, value in info.iteritems(newdata):
 #    print key
 #    print value
-
 
 
 class Rig_Arm:
@@ -252,7 +254,6 @@ class Rig_Arm:
         cmds.select(d=True)
 
 
-
     #----- ARM IKFK SWITCH -----#
 
     #def to key parent weights
@@ -264,14 +265,3 @@ class Rig_Arm:
                                    cd='ctl_IKFK_Switch.IK_to_FK_Switch')
             cmds.setDrivenKeyframe('rig_' + each + '_jnt_parentConstraint1.ik_' + each + '_jntW1',
                                    cd='ctl_IKFK_Switch.IK_to_FK_Switch')
-
-
-    #-----update JSON-----#
-    # except that it doesn't apparently and it's making it very difficult to track down why my digits can't seem to build hierarchies.
-'''
-
-    #filename = '/Users/Miko/Desktop/DojoClass/Python_101_S2_2015/layout/test.json'
-    utils.writeJson(filename, rig_data)
-
-    print newdata
-'''
