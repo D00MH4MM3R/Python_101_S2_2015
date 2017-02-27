@@ -11,4 +11,4 @@ cmds.currentUnit(time='ntsc')
 cmds.currentUnit(linear='cm')
 
 #import ui.py for tool menu
-import scripts.kcUI as ui
+import ui.kcUI as ui

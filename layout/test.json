@@ -1,1 +1,1 @@
-{"armjnt": ["shoulder", "elbow", "wrist", "wristEnd"], "pos_digit": [], "pos_arm": [[0, 0, 0], [-48, 12, 0], [-96, 0, 0], [-96.001, 0, 0]], "handjnt": []}
+["digit1_1", "digit1_2", "digit1_3", "digit1_4", "digit2_1", "digit2_2", "digit2_3", "digit2_4", "digit3_1", "digit3_2", "digit3_3", "digit3_4", "digit4_1", "digit4_2", "digit4_3", "digit4_4", "digit5_1", "digit5_2", "digit5_3", "digit5_4", "cup"]

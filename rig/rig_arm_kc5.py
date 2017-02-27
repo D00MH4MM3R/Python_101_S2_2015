@@ -184,7 +184,9 @@ class Rig_Arm:
 
         print len(rig_data['handjnt'])  # --- this is proof that 5 finger/4 jnt has 21 entries. WHY DON'T THEY WRITE TO JSON?!?!
         print rig_data['handjnt'] # --- here are all their names. i don't see where the problem's happening
-        utils.writeJson(filename, rig_data['handjnt']
+
+        #NOTE:  Found an error on the next line missing a ")" at the end.
+        utils.writeJson(filename, rig_data['handjnt'])
 
         # parent joints to controls
         for i in range(len(rig_data['handjnt'])):
