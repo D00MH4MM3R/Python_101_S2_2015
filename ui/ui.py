@@ -22,6 +22,10 @@ class RDojo_UI:
 		# dictionary to hold UI elements
 		self.uiElements = {}
 
+		# variables for error message
+		self.msg = ''
+		self.view = False
+
 		dp.loadData()
 
 
@@ -32,9 +36,9 @@ class RDojo_UI:
 			pm.deleteUI(windowName)
 
 		# set up window and button size
-		windowWidth = 375
-		windowHeight = 75
-		listWidth = 125
+		windowWidth = 245
+		windowHeight = 145
+		listWidth = 75
 		listHeight = 30
 		buttonWidth = 100
 		buttonHeight = 30
@@ -42,24 +46,28 @@ class RDojo_UI:
 		self.uiElements['window'] = pm.window(windowName, width=windowWidth, height=windowHeight, title='RDojo_UI', sizeable=True)
 
 		# create ui layouts
-		self.uiElements['mainColLayout'] = pm.columnLayout(adjustableColumn=True)
-		self.uiElements['guiFrameLayout'] = pm.frameLayout(label='Layout', borderStyle='in', parent=self.uiElements['mainColLayout'])
-		self.uiElements['guiFlowLayout'] = pm.flowLayout(vertical=False, width=windowWidth, height=windowHeight/2, wrap=True, backgroundColor=[.2, .2, .2], parent=self.uiElements['guiFrameLayout'])
+		self.uiElements['mainColLayout'] = pm.columnLayout(width=windowWidth, backgroundColor=(.5, .5, .5))
+		self.uiElements['guiFrameLayout'] = pm.frameLayout(label='Layout', borderStyle='in', backgroundColor=(.5, .5, .5), parent=self.uiElements['mainColLayout'])
+		self.uiElements['guiLabelLayout'] = pm.rowLayout(numberOfColumns=3, columnWidth3=(80, 75, 80), columnAlign=[(1, 'center'), (2, 'center'), (3, 'center')], 
+			columnAttach=[(1, 'both', 0), (2, 'both', 0), (3, 'both', 0)], parent=self.uiElements['guiFrameLayout'])
+		self.uiElements['guiComboLayout'] = pm.rowLayout(numberOfColumns=3, columnWidth3=(listWidth, listWidth, listWidth), columnAttach=[(1, 'both', 2), (2, 'both', 2), (3, 'both', 2)], 
+			parent=self.uiElements['guiFrameLayout'])
+		self.uiElements['guiMsgLayout'] = pm.rowLayout(numberOfColumns=1, width=windowWidth, parent=self.uiElements['guiFrameLayout'])
+		self.uiElements['guiButtonLayout'] = pm.rowLayout(numberOfColumns=1, width=windowWidth, parent=self.uiElements['guiFrameLayout'])
 
 		# create comboboxes and button
-		self.uiElements['comboRowLayout'] = pm.rowColumnLayout(numberOfRows=2, parent=self.uiElements['guiFlowLayout'])
-		#self.uiElements['comboRowLayout'] = pm.rowColumnLayout(numberOfColumns=3, columnWidth=[(1,listWidth), (2,listWidth), (3,listWidth)], columnOffset=[(2, "both", 2)], parent=self.uiElements['guiFlowLayout'])
 		self.createComboBox(listWidth, listHeight)
 
-		pm.separator(width=10, horizontal=True, style='none', parent=self.uiElements['guiFlowLayout'])
-		self.uiElements['buttonRowLayout'] = pm.rowColumnLayout(numberOfColumns=3, columnAlign=[2, 'center'], parent=self.uiElements['guiFlowLayout'])
-		self.uiElements['rigButton'] = pm.button(label='Create Rig', width=buttonWidth, height=buttonHeight, backgroundColor=[.2, .3, .2], parent=self.uiElements['guiFlowLayout'], command=self.rigarm)
+		self.uiElements['errorMsg'] = pm.text(label=self.msg, width=windowWidth, height=buttonHeight, align='center', font='boldLabelFont', visible=self.view, parent=self.uiElements['guiMsgLayout']) 
+		self.uiElements['rigButton'] = pm.button(label='Create Rig', width=windowWidth, height=buttonHeight, backgroundColor=(.1, .2, .2), parent=self.uiElements['guiButtonLayout'], 
+			command=self.rigarm)
 
 		# show window
 		pm.showWindow(windowName)
 		
 
 	def createComboBox(self, lWidth, lHeight):
+		print 'creating combo boxes'
 		# load the menu file to create comboboxes
 		fileName = os.environ['DATA_PATH'] + 'menuData.json'
 		menuInfo = json.loads(utils.readJson(fileName))	 
@@ -67,24 +75,24 @@ class RDojo_UI:
 		for dictItem in menuInfo:
 			# get appropriate label
 			items = menuInfo.get(dictItem)
-			print 'items = ', items
 			pos = [ndx for ndx, char in enumerate(dictItem) if char.isupper()]
 			labelName = dictItem[0:pos[0]].capitalize()+" "+dictItem[pos[0]:len(dictItem)]
-			print 'label name = ', labelName
 	
-			self.uiElements['comboLabel'] = pm.text(label=labelName, font="boldLabelFont", width=lWidth, height=lHeight, parent=self.uiElements['guiFlowLayout'])
-			self.uiElements[dictItem] = pm.optionMenu(width=lWidth, height=lHeight, parent=self.uiElements['guiFlowLayout'], changeCommand=partial(self.item_changed, dictItem))
+			self.uiElements['comboLabel'] = pm.text(label=labelName, font="boldLabelFont", width=lWidth, height=lHeight, parent=self.uiElements['guiLabelLayout'])
+			self.uiElements[dictItem] = pm.optionMenu(width=lWidth, height=lHeight, backgroundColor=(.5, .5, .5), parent=self.uiElements['guiComboLayout'], 
+				changeCommand=partial(self.item_changed, dictItem))
 			for di in items:
-				print 'di = ', di
 				pm.menuItem(label=di, parent=self.uiElements[dictItem])
 			
 	
 	def item_changed(self, itemName, *args):
-		print 'change command item = ', itemName
+		print 'running change function'
 		val = pm.optionMenu(self.uiElements[itemName], query=True, value=True)
-		print 'value = ', val
-
- 
+		if val == ' ':
+			self.msg = itemName + ' cannot be blank.'
+			self.view = True
+			print itemName + ' cannot be blank.'
+ 		return val
 
 
 	def rigarm(self, *args):

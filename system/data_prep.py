@@ -9,9 +9,9 @@ def loadData():
 	fileName = os.environ['DATA_PATH'] + 'menuData.json'
 
 	menu_data = {}
-	menu_data['bodyPart'] = ['arm', 'leg']
-	menu_data['bodySide'] = ['both', 'left', 'right']
-	menu_data['rigType'] = ['all', 'ik', 'fk', 'rig']
+	menu_data['bodyPart'] = [' ', 'arm', 'leg']
+	menu_data['bodySide'] = [' ', 'both', 'left', 'right']
+	menu_data['rigType'] = [' ', 'all', 'ik', 'fk', 'rig']
 	
 	utils.writeJson(fileName, menu_data)
 
