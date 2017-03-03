@@ -15,11 +15,11 @@ def readJson(fileName):
 
 def colOverride(ext, controls):
 
-	if ext == 'LA' or side == 'LL':
+	if ext == 'LA' or ext == 'LL':
 		color = 6
-	elif ext == 'RA' or side == 'RL':
+	elif ext == 'RA' or ext == 'RL':
 		color = 13
-	elif ext == 'LA' or side == 'LL':
+	elif ext == 'LA' or ext == 'LL':
 		color = 17
 
 	for c in controls:
@@ -31,3 +31,23 @@ def colOverride(ext, controls):
 			for t in targetShape[1:]:
 				cmds.setAttr( str(t) + ".overrideEnabled", 1)
 				cmds.setAttr( str(t) + ".overrideColor", color)
+
+def symmetryConstraint(source, target):
+    sourceType = cmds.nodeType(source)
+    targetType = cmds.nodeType(target)
+    currentCons = cmds.shadingNode('symmetryConstraint', au = True)    
+    cmds.connectAttr(source + '.translate', currentCons + '.targetTranslate')  
+    cmds.connectAttr(source + '.rotate', currentCons + '.targetRotate')  
+    cmds.connectAttr(source + '.scale', currentCons + '.targetScale')  
+    cmds.connectAttr(source + '.parentMatrix[0]', currentCons + '.targetParentMatrix')  
+    cmds.connectAttr(source + '.worldMatrix[0]', currentCons + '.targetWorldMatrix')  
+    cmds.connectAttr(source + '.rotateOrder', currentCons + '.targetRotateOrder')  
+    cmds.connectAttr(currentCons + '.constraintTranslate', target + '.translate')  
+    cmds.connectAttr(currentCons + '.constraintRotate', target + '.rotate')  
+    cmds.connectAttr(currentCons + '.constraintScale', target + '.scale')  
+    cmds.connectAttr(currentCons + '.constraintRotateOrder', target + '.rotateOrder')  
+    cmds.connectAttr(target + '.parentInverseMatrix[0]', currentCons + '.constraintInverseParentWorldMatrix')
+    if sourceType == 'joint' and targetType == 'joint':
+        cmds.connectAttr(source + '.jointOrient', currentCons + '.target.targetJointOrient')
+        cmds.connectAttr(currentCons + '.constrained.constraintJointOrient', target + '.jointOrient')
+    cmds.parent(currentCons, target)

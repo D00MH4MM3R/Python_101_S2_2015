@@ -33,23 +33,30 @@ class RDojo_UI:
 	 	self.uiElements['layoutFrameLayout'] = cmds.frameLayout ("layoutTab", w = windowWidth, label = "Layout", cll = True, p = self.uiElements['mainColLayout'])
 
 	 	self.uiElements['layoutButton'] = cmds.button(l= 'Generate Layout', w = windowWidth, h = buttonHeight/2, c = self.riglayout)
+	 	self.uiElements['symmArmLayout'] = cmds.rowColumnLayout("Symm", numberOfColumns = 3, columnWidth = [(1, windowWidth/3), (2, windowWidth/3),(3, windowWidth/3)])
+	 	cmds.text(l = ' ')
+	 	self.uiElements['symmBox'] = cmds.checkBox( "symmBox", label = "Symmetry")
+	 	cmds.text(l = ' ')
+	 	cmds.separator( width = windowWidth, style='none', h = 5)
 
-	 	self.uiElements['optionsFrameLayout'] = cmds.frameLayout ("optionsTab", w = windowWidth, label = "Options", cll = True, p = self.uiElements['mainColLayout'])
-	 	cmds.separator( width = windowWidth, style='none')
-	 	self.uiElements['optionsColLayout'] = cmds.rowColumnLayout("optionsColLayout", numberOfColumns = 2, columnWidth = [(1, windowWidth/2), (2, windowWidth/2)])
-
+	 	
+	 	self.uiElements['optionsFrameLayout'] = cmds.frameLayout ("optionsTab", w = windowWidth, label = "Options", cll = True, p = self.uiElements['mainColLayout']) 
+	 	self.uiElements['optionsTabLayout'] = cmds.tabLayout(w = windowWidth)
+	 	self.uiElements['optionsArmLayout'] = cmds.rowColumnLayout("Arm", numberOfColumns = 2, columnWidth = [(1, windowWidth/2), (2, windowWidth/2)])
 
 	 	self.uiElements['stretchBox'] = cmds.checkBox( "stretchBox", label = "Stretch")
 	 	self.uiElements['twistBox'] = cmds.checkBox( "twistBox", label = "Twist Joints")
-	 	cmds.separator( width = windowWidth, style='none', h = 10,  p = self.uiElements['optionsColLayout'])
+	 	cmds.separator( width = windowWidth, style='none', h = 10,  p = self.uiElements['optionsArmLayout'])
 
 	 	self.uiElements['modFrameLayout'] = cmds.frameLayout ("ModuleTab", w = windowWidth, label = "Modules", cll = True, p = self.uiElements['mainColLayout'])
 	 	self.uiElements['modFlowLayout'] = cmds.flowLayout("moduleFlowLayout", v = False, w = windowWidth, h = windowHeight/2, wr = True)
 
 	 	self.uiElements['armButton'] = cmds.button(l= 'Arm', w = buttonWidth, h = buttonHeight/2, c = self.rig_arm)
-	 	self.uiElements['legButton'] = cmds.button(l= 'Leg', w = buttonWidth, h = buttonHeight/2, c =  self.filler)
+	 	self.uiElements['legButton'] = cmds.button(l= 'Leg', w = buttonWidth, h = buttonHeight/2, c =  self.rig_leg)
 	 	self.uiElements['spineButton'] = cmds.button(l= 'Spine', w = buttonWidth, h = buttonHeight/2, c =  self.filler)
 	 	self.uiElements['footButton'] = cmds.button(l= 'Foot', w = buttonWidth, h = buttonHeight/2, c =  self.filler)
+
+	
 
 
 	 	cmds.showWindow(self.uiElements['window'])
@@ -63,6 +70,16 @@ class RDojo_UI:
 		print 'Rigging Arm'
 		#excecute the arm bulding function from within the variable that houses the class
 		rig_arm.rig_arm()
+
+	def rig_leg(self, *args):
+		#import the module with an alias
+		import rig.leg_rig as leg_rig
+		reload(leg_rig)
+		#store the class within a variable
+		rig_leg = leg_rig.Rig_Leg()
+		print 'Rigging Leg'
+		#excecute the arm bulding function from within the variable that houses the class
+		rig_leg.rig_leg()
 
 	def riglayout(self, *args):
 		import layout.rig_Layout as rig_Layout

@@ -3,14 +3,18 @@ import system.utils as utils
 import maya.OpenMaya as om
 
 
-def jointCreation(prefix, chainTypes, name, position):
+def jointCreation(prefix, chainTypes, name, position, extremity):
         joints = []
         for n in name:
             #For each chain created, it then creates each joint specified in the name argument #
-            joints.append(cmds.joint(n = prefix + '_' + chainTypes + '_' + n + '_jnt', p = position[n]))
+            joints.append(cmds.joint(n = prefix + '_' + extremity + '_'+ chainTypes + '_' + n + '_jnt', p = position[n]))
             if name.index(n) != 0:
                 # If the joint isnt the first one, it will orient it's parent #
-                cmds.joint(prefix + '_' + chainTypes + '_' + name[name.index(n)-1] + '_jnt', e = True, zso = True, oj = 'xyz', sao = 'yup')
+                if extremity == 'LA' or extremity == 'LL':
+                    cmds.joint(prefix + '_' + extremity + '_' + chainTypes + '_' + name[name.index(n)-1] + '_jnt', e = True, zso = True, oj = 'xyz', sao = 'yup')
+                if extremity == 'RA' or extremity == 'RL':
+                    cmds.joint(prefix + '_' + extremity + '_' + chainTypes + '_' + name[name.index(n)-1] + '_jnt', e = True, zso = True, oj = 'xyz', sao = 'yup')
+
         cmds.select(d=True)
         return joints
 
@@ -69,7 +73,34 @@ def ikSystemCreation(startJoint, midJoint, endJoint, extremity):
     
     return ikGroup, pvGroup, ikH, ikControl, poleVector
 
-
+## Creating the FK Arm Controls ##
+def fkSystem(startJoint):
+    #Creating needed variables for naming and parenting controls in a hierarchy
+    cmds.select(startJoint, hi = True)
+    fkJoints = cmds.ls(sl = True)
+    fkControls = []
+    
+    
+    for f in fkJoints:
+        if fkJoints.index(f) != len(fkJoints)-1:
+            #Querying joint transforms for control placement.
+            currentPos = cmds.xform(f, q = True, ws = True, t = True)
+            currentRot = cmds.xform(f, q = True, ws = True, ro = True)
+            #Splitting joint names for control naming.
+            name = f.split('_')
+            #Control creation.
+            fkControls.append(cmds.circle(n = 'ctrl_' + name[1] + '_' + name[2] + '_' + name[3], nr = (1,0,0))[0])
+            currentGroup = cmds.group(fkControls[fkJoints.index(f)], n = str(fkControls[fkJoints.index(f)]) + '_grp')
+            cmds.xform(currentGroup, t = currentPos, ws = True)
+            cmds.xform(currentGroup, ro = currentRot, ws = True)
+            #If statement: So if theres a previously created fk control, the new one gets parented under it.
+            if fkJoints.index(f) >= 1:
+                cmds.parent(currentGroup, fkControls[fkJoints.index(f)-1])
+            #Constraining control to joint    
+            cmds.parentConstraint(fkControls[fkJoints.index(f)], f, mo = True)
+            del name
+            cmds.select(d=True)
+    return fkControls
  
 def stretchNodes(prefix, startJnt, midJnt, endJnt, ikControl, target, side):
  
@@ -111,7 +142,7 @@ def stretchNodes(prefix, startJnt, midJnt, endJnt, ikControl, target, side):
     if side == 'LA' or side == 'LL':
         cmds.setAttr(cndStretch + '.operation', 3)
     elif side == 'RA' or side == 'RL':
-        cmds.setAttr(cndStretch + '.operation', 5)
+        cmds.setAttr(cndStretch + '.operation', 3)
        
     ##NodeConnections##
     cmds.connectAttr(distanceDim + 'Shape.distance', mdScaleOffset + '.input1X')
@@ -133,7 +164,7 @@ def stretchNodes(prefix, startJnt, midJnt, endJnt, ikControl, target, side):
     ##value inversion for right side##
     if side == 'RA' or side == 'RL':
         mdDistanceInv = cmds.shadingNode('multiplyDivide', au = True, n = prefix + '_' + side + '_distance_Invert_MD')
-        cmds.setAttr(mdDistanceInv + '.input2X', -1)
+        cmds.setAttr(mdDistanceInv + '.input2X', 1)
         cmds.connectAttr(mdScaleOffset + '.outputX', mdDistanceInv + '.input1X')
         cmds.connectAttr(mdDistanceInv + '.outputX', mdDistance + '.input1X')
 
