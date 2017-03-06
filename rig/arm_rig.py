@@ -11,7 +11,7 @@ class Rig_Arm:
         self.rig_info = {}
         self.rig_data = {}
         self.layoutPos = {}
-        self.stretch = cmds.checkBox('stretchBox', q = True, v = True)
+        self.stretch = cmds.checkBox('stretchArmBox', q = True, v = True)
         self.sysPath =  os.environ["RDOJO_DATA"] + '/arm_log.json'
         self.dataPath = os.environ["RDOJO_DATA"] + '/arm_data.json'
 

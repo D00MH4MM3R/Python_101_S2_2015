@@ -33,19 +33,25 @@ class RDojo_UI:
 	 	self.uiElements['layoutFrameLayout'] = cmds.frameLayout ("layoutTab", w = windowWidth, label = "Layout", cll = True, p = self.uiElements['mainColLayout'])
 
 	 	self.uiElements['layoutButton'] = cmds.button(l= 'Generate Layout', w = windowWidth, h = buttonHeight/2, c = self.riglayout)
-	 	self.uiElements['symmArmLayout'] = cmds.rowColumnLayout("Symm", numberOfColumns = 3, columnWidth = [(1, windowWidth/3), (2, windowWidth/3),(3, windowWidth/3)])
-	 	cmds.text(l = ' ')
+	 	self.uiElements['symmArmLayout'] = cmds.rowColumnLayout("Symm", numberOfColumns = 3, columnWidth = [(1, windowWidth/4), (2, windowWidth/1.3)])
 	 	self.uiElements['symmBox'] = cmds.checkBox( "symmBox", label = "Symmetry")
-	 	cmds.text(l = ' ')
-	 	cmds.separator( width = windowWidth, style='none', h = 5)
+	 	cmds.text(l = '*Note: Activate before generating.')
+	 	cmds.separator( width = windowWidth, style='none', h = 3,  p = self.uiElements['layoutFrameLayout'])
+	 	
 
 	 	
 	 	self.uiElements['optionsFrameLayout'] = cmds.frameLayout ("optionsTab", w = windowWidth, label = "Options", cll = True, p = self.uiElements['mainColLayout']) 
-	 	self.uiElements['optionsTabLayout'] = cmds.tabLayout(w = windowWidth)
-	 	self.uiElements['optionsArmLayout'] = cmds.rowColumnLayout("Arm", numberOfColumns = 2, columnWidth = [(1, windowWidth/2), (2, windowWidth/2)])
+	 	self.uiElements['optionsTabLayout'] = cmds.tabLayout('optionsTabs', w = windowWidth)
+	 	self.uiElements['optionsArmLayout'] = cmds.rowColumnLayout("Arm", numberOfColumns = 2, columnWidth = [(1, windowWidth/2), (2, windowWidth/2)], p =self.uiElements['optionsTabLayout'])
 
-	 	self.uiElements['stretchBox'] = cmds.checkBox( "stretchBox", label = "Stretch")
-	 	self.uiElements['twistBox'] = cmds.checkBox( "twistBox", label = "Twist Joints")
+	 	self.uiElements['stretchArmBox'] = cmds.checkBox( "stretchArmBox", label = "Stretch")
+	 	self.uiElements['twistArmBox'] = cmds.checkBox( "twistArmBox", label = "Twist Joints")
+	 	cmds.separator( width = windowWidth, style='none', h = 10,  p = self.uiElements['optionsArmLayout'])
+
+	 	self.uiElements['optionsLegLayout'] = cmds.rowColumnLayout("Leg", numberOfColumns = 2, columnWidth = [(1, windowWidth/2), (2, windowWidth/2)], p =self.uiElements['optionsTabLayout'])
+
+	 	self.uiElements['stretchLegBox'] = cmds.checkBox( "stretchLegBox", label = "Stretch")
+	 	self.uiElements['twistLegBox'] = cmds.checkBox( "twistLegBox", label = "Twist Joints")
 	 	cmds.separator( width = windowWidth, style='none', h = 10,  p = self.uiElements['optionsArmLayout'])
 
 	 	self.uiElements['modFrameLayout'] = cmds.frameLayout ("ModuleTab", w = windowWidth, label = "Modules", cll = True, p = self.uiElements['mainColLayout'])
