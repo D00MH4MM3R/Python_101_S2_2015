@@ -5,7 +5,7 @@ import system.rig_utils as rig_utils
 import os
 import json
 
-class Rig_Arm:
+class rig_arm:
 
     def __init__(self):
         self.rig_info = {}
@@ -15,11 +15,16 @@ class Rig_Arm:
         self.sysPath =  os.environ["RDOJO_DATA"] + '/arm_log.json'
         self.dataPath = os.environ["RDOJO_DATA"] + '/arm_data.json'
 
+
     ## Importing parameters such as names and positions ##
     def importData(self, path):
         importData = utils.readJson(self.dataPath) 
         self.rig_data = json.loads(importData)
         print 'Parameters Imported'
+
+    def ui(self, name, *args):
+            self.uiElements['stretch'+ name[0] +'Box'] = cmds.checkBox( 'stretch'+ name[0] +'Box', label = "Stretch")
+            self.uiElements['twist'+ name[0] +'Box'] = cmds.checkBox( 'twist'+ name[0] +'Box', label = "Twist Joints")
 
     ## Executing the required functions for building the arm ##
     def rig_arm(self):
