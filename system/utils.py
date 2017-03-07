@@ -15,20 +15,20 @@ def readJson(fileName):
 
 
 # create joints for different sides of the body
-def createSide(self, ikfkList, jntList, posList):
+def createSide(self, bodySide, ikfkList, jntList, posList):
 	# used to create the left arm
 	for item in ikfkList:
 		for j in range(len(jntList)):
-			jntName = self.bodySide[0]+item+jntList[j]
+			jntName = bodySide+item+jntList[j]
 			pm.joint(name=jntName, position=posList[j], radius=.5)
 
 		pm.select(deselect=True)	
 
-def mirrorSide(self, ikfkList, jntList, posList):
+def mirrorSide(self, bodySide, ikfkList, jntList, posList):
 	# used to create the right arm
 	for item in ikfkList:
 		for j in range(len(jntList)):
-			jntName = self.bodySide[1]+item+jntList[j]
+			jntName = bodySide+item+jntList[j]
 			if posList[j][0] > 0:
 				posList[j][0] = posList[j][0] * -1
 			pm.joint(name=jntName, position=posList[j], radius=.5, orientation=(180,0,0))

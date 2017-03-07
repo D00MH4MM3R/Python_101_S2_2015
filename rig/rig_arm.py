@@ -12,6 +12,9 @@ import system.utils as utils
 import json
 import os
 
+# attributes associated with the class
+className = 'RigArm'
+numJnts = 4
 
 class RigArm():
 	print 'Starting IK-FK Arm Rig...'
@@ -19,36 +22,59 @@ class RigArm():
 	def __init__(self):
 		print 'processing init'
 
-		fileName = os.environ['DATA_PATH'] + 'arm.json'
-		self.rigInfo = json.loads(utils.readJson(fileName))
-		self.keyNames = self.rigInfo.get('keyNames')
+		fileName = os.environ['DATA_PATH']
+		#if bodyPart == 'leg':
+		#	fileName = fileName + 'legData.json'
+		#elif bodyPart == 'arm':
+		fileName = fileName + 'armData.json'
+
+		self.jsonInfo = json.loads(utils.readJson(fileName))
+		self.keyNames = self.jsonInfo.get('keyNames')
 		# index 0 = jnts, index 1 = ikCtrls, index 2 = fkCtrls, index 3 = ctrlGrps, index 4 = jntPos
 
+		# new dictionary to store info about the rig
+		self.rigInfo = {}
+		# check to see if a joint system is selected and get new positions
+		if len(pm.ls(selection=True, type='joint')) == numJnts:
+			sel = pm.ls(selection=True, type='joint')
+			positions = []
+			for s in sel:
+				positions.append(pm.xform(s, query=True, worldSpace=True, translation=True))
+			self.rigInfo['jntPos'] = positions
+		else:
+			self.rigInfo['jntPos'] = self.jsonInfo['jntPos']
 
-	def createRig(self):
-		self.createJoint('both')
-		self.createIK('both')
-		self.createFK('both')
-		self.connectJoints('both')
-		self.createPoleVector('both')
-		self.createIKSwitch('both')
+
+	def createRig(self, bodyPart, bodySide, rigType):
+		self.createJoint(bodySide, rigType)
+	
+		if rigType == 'ik':
+			self.createIK(bodySide)
+			self.createIKSwitch(bodySide)
+			self.createPoleVector(bodySide)
+		elif rigType == 'fk':
+			self.createFK(bodySide)
+		elif rigType == 'all':
+			self.createIK(bodySide)
+			self.createIKSwitch(bodySide)
+			self.createFK(bodySide)
+			self.createPoleVector(bodySide)
+			self.connectJoints(bodySide)
 
 
-	# when UI is created, the sides parameter with be passed in - left, right or both
-	def createJoint(self, sides):
-		# get list of joints, type of joints and the joint position from rig info
-		ikfkList = self.rigInfo.get(self.keyNames[1])
-		jntList = self.rigInfo.get(self.keyNames[2])
-		posList = self.rigInfo.get(self.keyNames[6])
+	def createJoint(self, sides, rigType):
+		# get list of joints and the joint position from the json info
+		jntList = self.jsonInfo.get(self.keyNames[0])
+		posList = self.jsonInfo.get(self.keyNames[4])
 
 		# createSide is used for the left side and mirrorSide is used for the right side
 		if sides == 'both':
-			utils.createSide(self, ikfkList, jntList, posList)
-			utils.mirrorSide(self, ikfkList, jntList, posList)
+			utils.createSide(self, sides, rigType, jntList, posList)
+			utils.mirrorSide(self, sides, rigType, jntList, posList)
 		elif sides == 'left':
-			utils.createSide(self, ikfkList, jntList, posList)
+			utils.createSide(self, sides, rigType, jntList, posList)
 		else:
-			utils.mirrorSide(self, ikfkList, jntList, posList)
+			utils.mirrorSide(self, sides, rigType, jntList, posList)
 
 
 	def createIK(self, sides):
