@@ -23,6 +23,7 @@ class RDojo_UI:
 			if '.pyc' not in m and '__init__' not in m:
 				self.rigmodlist.append(m)
 		
+
 		print 'Rig_Arm'
 		
 	def ui(self, *args):
@@ -58,9 +59,9 @@ class RDojo_UI:
 			self.uiElements['options'+ name[0] +'Layout'] = cmds.rowColumnLayout(name[0], numberOfColumns = 2, columnWidth = [(1, windowWidth/2), (2, windowWidth/2)], p =self.uiElements['optionsTabLayout'])
 
 			mod = __import__("rig." + name[0], {}, {}, name[0])
-			#mod = import_module('rig.' + name[0])
-			help(mod)
-			getattr(mod, 'ui')
+			moduleClass = getattr(mod, mod.classname)
+			moduleInstance = moduleClass()
+			self.uiElements[name[0] + 'Boxes'] = moduleInstance.ui(name[0])
 			#Tried multiple ways, always gives me the same error
 			#self.uiElements['stretch'+ name[0] +'Box'] = cmds.checkBox( 'stretch'+ name[0] +'Box', label = "Stretch")
 			#self.uiElements['twist'+ name[0] +'Box'] = cmds.checkBox( 'twist'+ name[0] +'Box', label = "Twist Joints")
@@ -85,6 +86,7 @@ class RDojo_UI:
 
 	def arm_rig(self, *args):
 		#import the module with an alias
+		stretch = cmds.checkBox(self.uiElements['ArmBoxes'][0], q = True, v = True)
 		import rig.Arm as arm_rig
 		reload(arm_rig)
 		#store the class within a variable
@@ -92,9 +94,11 @@ class RDojo_UI:
 		print 'Rigging Arm'
 		#excecute the arm bulding function from within the variable that houses the class
 		rig_arm.rig_arm()
+		return stretch
 
 	def leg_rig(self, *args):
 		#import the module with an alias
+		stretch = cmds.checkBox(self.uiElements['LegBoxes'][0], q = True, v = True)
 		import rig.Leg as leg_rig
 		reload(leg_rig)
 		#store the class within a variable
@@ -102,6 +106,7 @@ class RDojo_UI:
 		print 'Rigging Leg'
 		#excecute the arm bulding function from within the variable that houses the class
 		rig_leg.rig_leg()
+		return stretch
 
 	def riglayout(self, *args):
 		import layout.rig_Layout as rig_Layout

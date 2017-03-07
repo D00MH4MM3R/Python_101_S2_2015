@@ -5,13 +5,15 @@ import system.rig_utils as rig_utils
 import os
 import json
 
-class Rig_Leg:
+classname = 'rig_leg'
+
+class rig_leg:
 
     def __init__(self):
         self.rig_info = {}
         self.rig_data = {}
         self.layoutPos = {}
-        self.stretch = cmds.checkBox('stretchLegBox', q = True, v = True)
+        #self.stretch = cmds.checkBox('stretchLegBox', q = True, v = True)
         self.sysPath =  os.environ["RDOJO_DATA"] + '/leg_log.json'
         self.dataPath = os.environ["RDOJO_DATA"] + '/leg_data.json'
 
@@ -21,9 +23,15 @@ class Rig_Leg:
         self.rig_data = json.loads(importData)
         print 'Parameters Imported'
 
+    def ui(self, name, *args):
+            self.stretchLegBox = cmds.checkBox( 'stretch'+ name[0] +'Box', label = "Stretch")
+            self.twistLegBox = cmds.checkBox( 'twist'+ name[0] +'Box', label = "Twist Joints")
+            return(self.stretchLegBox, self.twistLegBox)
     ## Executing the required functions for building the arm ##
     def rig_leg(self):
+        
         reload(rig_utils)
+
         cmds.select(d = True)
 
         self.importData(self.dataPath)

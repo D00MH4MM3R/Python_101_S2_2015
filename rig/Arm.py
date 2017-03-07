@@ -5,13 +5,15 @@ import system.rig_utils as rig_utils
 import os
 import json
 
+classname = 'rig_arm'
+
 class rig_arm:
 
     def __init__(self):
         self.rig_info = {}
         self.rig_data = {}
         self.layoutPos = {}
-        self.stretch = cmds.checkBox('stretchArmBox', q = True, v = True)
+        #self.stretch = cmds.checkBox('stretchArmBox', q = True, v = True)
         self.sysPath =  os.environ["RDOJO_DATA"] + '/arm_log.json'
         self.dataPath = os.environ["RDOJO_DATA"] + '/arm_data.json'
 
@@ -23,12 +25,15 @@ class rig_arm:
         print 'Parameters Imported'
 
     def ui(self, name, *args):
-            self.uiElements['stretch'+ name[0] +'Box'] = cmds.checkBox( 'stretch'+ name[0] +'Box', label = "Stretch")
-            self.uiElements['twist'+ name[0] +'Box'] = cmds.checkBox( 'twist'+ name[0] +'Box', label = "Twist Joints")
-
+            self.stretchArmBox = cmds.checkBox( 'stretch'+ name[0] +'Box', label = "Stretch")
+            self.twistArmBox = cmds.checkBox( 'twist'+ name[0] +'Box', label = "Twist Joints")
+            testBox = cmds.checkBox( 'test'+ name[0] +'Box', label = "Test Joints")
+            return(self.stretchArmBox, self.twistArmBox)
     ## Executing the required functions for building the arm ##
     def rig_arm(self):
+
         reload(rig_utils)
+        
         cmds.select(d = True)
 
         self.importData(self.dataPath)
@@ -51,7 +56,7 @@ class rig_arm:
 
         utils.colOverride(self.rig_data['ext'][0], (self.rig_info['ikArm_L'][3], self.rig_info['ikArm_L'][4], self.rig_info['fkCtrls_L']))
         
-        if self.stretch == 1:
+        if stretch == 1:
             self.rig_info['stretchNodes_L'] = rig_utils.stretchNodes(self.rig_data['prefix'][0], self.rig_info['ikJnts_L'][0], self.rig_info['ikJnts_L'][1], self.rig_info['ikJnts_L'][2], self.rig_info['ikArm_L'][3], self.rig_info['rigJnts_L'], self.rig_data['ext'][0])
 
 
@@ -74,7 +79,7 @@ class rig_arm:
 
         utils.colOverride(self.rig_data['ext'][2], (self.rig_info['ikArm_R'][3], self.rig_info['ikArm_R'][4], self.rig_info['fkCtrls_R']))
         
-        if self.stretch == 1:   
+        if stretch == 1:   
             self.rig_info['stretchNodes_R'] = rig_utils.stretchNodes(self.rig_data['prefix'][0], self.rig_info['ikJnts_R'][0], self.rig_info['ikJnts_R'][1], self.rig_info['ikJnts_R'][2], self.rig_info['ikArm_R'][3], self.rig_info['rigJnts_R'], self.rig_data['ext'][2])
 
         utils.writeJson(self.sysPath, self.rig_info)
