@@ -101,7 +101,38 @@ def fkSystem(startJoint):
             del name
             cmds.select(d=True)
     return fkControls
- 
+
+def ikFkBlend(target, iksource, fksource, ext):
+    
+    # Binding both chains to target chain and creating blend control.
+    tgJoints = target
+    
+    # Creating an IK FK blend control
+    switchControl = cmds.circle(n = 'ctrl_' + str(ext) + '_IkFk_Switch', nr = (0,1,0))
+    switchGroup = cmds.group(switchControl, n = switchControl[0] + '_grp')
+    offset = cmds.xform(iksource[2], q = True, ws = True, t = True)
+    cmds.move(offset[0], offset[1], offset[2]-2.5, switchGroup)
+    cmds.parentConstraint(iksource[2], switchGroup, mo = True)
+    
+    #Creating the IK FK Blend Attribute
+    cmds.addAttr(switchControl, ln = 'ikFk_Switch', at = 'float', k = True, min = 0, max = 1)
+    
+    nodes = []
+    #Creating blend colors nodes and connecting the ik and fk chains to the target chain
+    for t in tgJoints:
+        nodeName = t.split('_')
+        currentNode = cmds.shadingNode('blendColors', n = nodeName[2] + 'Blend_bc', au = True)
+        nodes.append(currentNode)
+        cmds.connectAttr(str(switchControl[0]) + '.ikFk_Switch', str(currentNode) + '.blender')
+        cmds.connectAttr(iksource[tgJoints.index(t)] + '.rotate', currentNode + '.color1')            
+        cmds.connectAttr(fksource[tgJoints.index(t)] + '.rotate', currentNode + '.color2')
+        cmds.connectAttr(currentNode + '.output', t + '.rotate')
+
+    return nodes
+
+
+
+
 def stretchNodes(prefix, startJnt, midJnt, endJnt, ikControl, target, side):
  
     ##Add the stretch attribute to the ikControl##

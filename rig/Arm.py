@@ -13,7 +13,6 @@ class rig_arm:
         self.rig_info = {}
         self.rig_data = {}
         self.layoutPos = {}
-        #self.stretch = cmds.checkBox('stretchArmBox', q = True, v = True)
         self.sysPath =  os.environ["RDOJO_DATA"] + '/arm_log.json'
         self.dataPath = os.environ["RDOJO_DATA"] + '/arm_data.json'
 
@@ -25,12 +24,13 @@ class rig_arm:
         print 'Parameters Imported'
 
     def ui(self, name, *args):
-            self.stretchArmBox = cmds.checkBox( 'stretch'+ name[0] +'Box', label = "Stretch")
-            self.twistArmBox = cmds.checkBox( 'twist'+ name[0] +'Box', label = "Twist Joints")
-            testBox = cmds.checkBox( 'test'+ name[0] +'Box', label = "Test Joints")
+            self.stretchArmBox = cmds.checkBox( 'stretch'+ name +'Box', label = "Stretch")
+            self.twistArmBox = cmds.checkBox( 'twist'+ name +'Box', label = "Twist Joints")
+            testBox = cmds.checkBox( 'test'+ name +'Box', label = "Test Joints")
             return(self.stretchArmBox, self.twistArmBox)
     ## Executing the required functions for building the arm ##
     def rig_arm(self):
+        self.stretch = cmds.checkBox('stretchArmBox', q = True, v = True)
 
         reload(rig_utils)
         
@@ -50,13 +50,14 @@ class rig_arm:
         
         self.rig_info['fkCtrls_L'] = rig_utils.fkSystem(self.rig_info['fkJnts_L'][0])
         
-        self.rig_info['nodes_L'] = self.ikFkBlend(self.rig_info['rigJnts_L'], self.rig_info['ikJnts_L'], self.rig_info['fkJnts_L'], self.rig_data['ext'][0])
+        self.rig_info['nodes_L'] = rig_utils.ikFkBlend(self.rig_info['rigJnts_L'], self.rig_info['ikJnts_L'], self.rig_info['fkJnts_L'], self.rig_data['ext'][0])
 
         self.cleanUpLeft()
 
         utils.colOverride(self.rig_data['ext'][0], (self.rig_info['ikArm_L'][3], self.rig_info['ikArm_L'][4], self.rig_info['fkCtrls_L']))
         
-        if stretch == 1:
+
+        if self.stretch == 1:
             self.rig_info['stretchNodes_L'] = rig_utils.stretchNodes(self.rig_data['prefix'][0], self.rig_info['ikJnts_L'][0], self.rig_info['ikJnts_L'][1], self.rig_info['ikJnts_L'][2], self.rig_info['ikArm_L'][3], self.rig_info['rigJnts_L'], self.rig_data['ext'][0])
 
 
@@ -73,13 +74,13 @@ class rig_arm:
         
         self.rig_info['fkCtrls_R'] = rig_utils.fkSystem(self.rig_info['fkJnts_R'][0])
         
-        self.rig_info['nodes_R'] = self.ikFkBlend(self.rig_info['rigJnts_R'], self.rig_info['ikJnts_R'], self.rig_info['fkJnts_R'], self.rig_data['ext'][2])
+        self.rig_info['nodes_R'] = rig_utils.ikFkBlend(self.rig_info['rigJnts_R'], self.rig_info['ikJnts_R'], self.rig_info['fkJnts_R'], self.rig_data['ext'][2])
 
         self.cleanUpRight()
 
         utils.colOverride(self.rig_data['ext'][2], (self.rig_info['ikArm_R'][3], self.rig_info['ikArm_R'][4], self.rig_info['fkCtrls_R']))
         
-        if stretch == 1:   
+        if self.stretch == 1:   
             self.rig_info['stretchNodes_R'] = rig_utils.stretchNodes(self.rig_data['prefix'][0], self.rig_info['ikJnts_R'][0], self.rig_info['ikJnts_R'][1], self.rig_info['ikJnts_R'][2], self.rig_info['ikArm_R'][3], self.rig_info['rigJnts_R'], self.rig_data['ext'][2])
 
         utils.writeJson(self.sysPath, self.rig_info)
@@ -95,36 +96,6 @@ class rig_arm:
                 #List their transform node and query their position#
                 name = l.split('_')[1]
                 self.layoutPos[name] = cmds.xform(l, ws = True, q = True, t = True)
-    
-               
-    
-        
-    def ikFkBlend(self, target, iksource, fksource, ext):
-        
-        # Binding both chains to target chain and creating blend control.
-        tgJoints = target
-        
-        # Creating an IK FK blend control
-        switchControl = cmds.circle(n = 'ctrl_' + str(ext) + '_IkFk_Switch', nr = (0,1,0))
-        switchGroup = cmds.group(switchControl, n = switchControl[0] + '_grp')
-        cmds.move(0,0,-3, switchGroup)
-        
-        #Creating the IK FK Blend Attribute
-        cmds.addAttr(switchControl, ln = 'ikFk_Switch', at = 'float', k = True, min = 0, max = 1)
-        
-        nodes = []
-        #Creating blend colors nodes and connecting the ik and fk chains to the target chain
-        for t in tgJoints:
-            nodeName = t.split('_')
-            currentNode = cmds.shadingNode('blendColors', n = nodeName[2] + 'Blend_bc', au = True)
-            nodes.append(currentNode)
-            cmds.connectAttr(str(switchControl[0]) + '.ikFk_Switch', str(currentNode) + '.blender')
-            cmds.connectAttr(iksource[tgJoints.index(t)] + '.rotate', currentNode + '.color1')            
-            cmds.connectAttr(fksource[tgJoints.index(t)] + '.rotate', currentNode + '.color2')
-            cmds.connectAttr(currentNode + '.output', t + '.rotate')
-    
-        return nodes
-
 
 
     def cleanUpLeft(self, *args):

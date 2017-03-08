@@ -24,11 +24,12 @@ class rig_leg:
         print 'Parameters Imported'
 
     def ui(self, name, *args):
-            self.stretchLegBox = cmds.checkBox( 'stretch'+ name[0] +'Box', label = "Stretch")
-            self.twistLegBox = cmds.checkBox( 'twist'+ name[0] +'Box', label = "Twist Joints")
+            self.stretchLegBox = cmds.checkBox( 'stretch'+ name +'Box', label = "Stretch")
+            self.twistLegBox = cmds.checkBox( 'twist'+ name +'Box', label = "Twist Joints")
             return(self.stretchLegBox, self.twistLegBox)
     ## Executing the required functions for building the arm ##
     def rig_leg(self):
+        self.stretch = cmds.checkBox('stretchLegBox', q = True, v = True)
         
         reload(rig_utils)
 
@@ -48,7 +49,7 @@ class rig_leg:
         
         self.rig_info['fkCtrls_L'] = rig_utils.fkSystem(self.rig_info['fkJnts_L'][0])
         
-        self.rig_info['nodes_L'] = self.ikFkBlend(self.rig_info['rigJnts_L'], self.rig_info['ikJnts_L'], self.rig_info['fkJnts_L'], self.rig_data['ext'][1])
+        self.rig_info['nodes_L'] = rig_utils.ikFkBlend(self.rig_info['rigJnts_L'], self.rig_info['ikJnts_L'], self.rig_info['fkJnts_L'], self.rig_data['ext'][1])
 
         self.cleanUpLeft()
 
@@ -71,7 +72,7 @@ class rig_leg:
         
         self.rig_info['fkCtrls_R'] = rig_utils.fkSystem(self.rig_info['fkJnts_R'][0])
         
-        self.rig_info['nodes_R'] = self.ikFkBlend(self.rig_info['rigJnts_R'], self.rig_info['ikJnts_R'], self.rig_info['fkJnts_R'], self.rig_data['ext'][3])
+        self.rig_info['nodes_R'] = rig_utils.ikFkBlend(self.rig_info['rigJnts_R'], self.rig_info['ikJnts_R'], self.rig_info['fkJnts_R'], self.rig_data['ext'][3])
 
         self.cleanUpRight()
 
@@ -93,35 +94,6 @@ class rig_leg:
                 #List their transform node and query their position#
                 name = l.split('_')[1]
                 self.layoutPos[name] = cmds.xform(l, ws = True, q = True, t = True)
-    
-               
-    
-        
-    def ikFkBlend(self, target, iksource, fksource, ext):
-        
-        # Binding both chains to target chain and creating blend control.
-        tgJoints = target
-        
-        # Creating an IK FK blend control
-        switchControl = cmds.circle(n = 'ctrl_' + str(ext) + '_IkFk_Switch', nr = (0,1,0))
-        switchGroup = cmds.group(switchControl, n = switchControl[0] + '_grp')
-        cmds.move(0,0,-3, switchGroup)
-        
-        #Creating the IK FK Blend Attribute
-        cmds.addAttr(switchControl, ln = 'ikFk_Switch', at = 'float', k = True, min = 0, max = 1)
-        
-        nodes = []
-        #Creating blend colors nodes and connecting the ik and fk chains to the target chain
-        for t in tgJoints:
-            nodeName = t.split('_')
-            currentNode = cmds.shadingNode('blendColors', n = nodeName[2] + 'Blend_bc', au = True)
-            nodes.append(currentNode)
-            cmds.connectAttr(str(switchControl[0]) + '.ikFk_Switch', str(currentNode) + '.blender')
-            cmds.connectAttr(iksource[tgJoints.index(t)] + '.rotate', currentNode + '.color1')            
-            cmds.connectAttr(fksource[tgJoints.index(t)] + '.rotate', currentNode + '.color2')
-            cmds.connectAttr(currentNode + '.output', t + '.rotate')
-    
-        return nodes
 
 
 

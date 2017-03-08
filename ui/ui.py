@@ -33,7 +33,7 @@ class RDojo_UI:
 
 		
 		windowHeight = 400
-		windowWidth = 301
+		windowWidth = 303
 		buttonHeight = 200
 		buttonWidth = 150
 
@@ -53,6 +53,7 @@ class RDojo_UI:
 		self.uiElements['optionsFrameLayout'] = cmds.frameLayout ("optionsTab", w = windowWidth, label = "Options", cll = True, p = self.uiElements['mainColLayout']) 
 		self.uiElements['optionsTabLayout'] = cmds.tabLayout('optionsTabs', w = windowWidth)
 
+		##Using the file list gathered form the directory we do a for loop creating ui elements for each module##
 		for m in self.rigmodlist:
 			name = m.split('.')
 			print name
@@ -62,12 +63,10 @@ class RDojo_UI:
 			moduleClass = getattr(mod, mod.classname)
 			moduleInstance = moduleClass()
 			self.uiElements[name[0] + 'Boxes'] = moduleInstance.ui(name[0])
-			#Tried multiple ways, always gives me the same error
-			#self.uiElements['stretch'+ name[0] +'Box'] = cmds.checkBox( 'stretch'+ name[0] +'Box', label = "Stretch")
-			#self.uiElements['twist'+ name[0] +'Box'] = cmds.checkBox( 'twist'+ name[0] +'Box', label = "Twist Joints")
+		
 			cmds.separator( width = windowWidth, style='none', h = 10,  p = self.uiElements['options'+ name[0] +'Layout'])
 
-
+		##Since the boxes are in a different part of the UI, we need to do a separate for loop for the##
 		self.uiElements['modFrameLayout'] = cmds.frameLayout ("ModuleTab", w = windowWidth, label = "Modules", cll = True, p = self.uiElements['mainColLayout'])
 		self.uiElements['modFlowLayout'] = cmds.flowLayout("moduleFlowLayout", v = False, w = windowWidth, h = windowHeight/2, wr = True)
 		for m in self.rigmodlist:
@@ -86,27 +85,29 @@ class RDojo_UI:
 
 	def arm_rig(self, *args):
 		#import the module with an alias
-		stretch = cmds.checkBox(self.uiElements['ArmBoxes'][0], q = True, v = True)
 		import rig.Arm as arm_rig
 		reload(arm_rig)
 		#store the class within a variable
 		rig_arm = arm_rig.rig_arm()
 		print 'Rigging Arm'
 		#excecute the arm bulding function from within the variable that houses the class
+		#self.stretch = cmds.checkBox(self.uiElements['ArmBoxes'][0], q = True, v = True)
+		#return stretch
 		rig_arm.rig_arm()
-		return stretch
+
 
 	def leg_rig(self, *args):
 		#import the module with an alias
-		stretch = cmds.checkBox(self.uiElements['LegBoxes'][0], q = True, v = True)
 		import rig.Leg as leg_rig
 		reload(leg_rig)
 		#store the class within a variable
-		rig_leg = leg_rig.Rig_Leg()
+		rig_leg = leg_rig.rig_leg()
 		print 'Rigging Leg'
+		print self.uiElements['LegBoxes']
 		#excecute the arm bulding function from within the variable that houses the class
 		rig_leg.rig_leg()
-		return stretch
+		#self.stretch = cmds.checkBox(self.uiElements['LegBoxes'][0], q = True, v = True)
+		#return self.stretch
 
 	def riglayout(self, *args):
 		import layout.rig_Layout as rig_Layout
