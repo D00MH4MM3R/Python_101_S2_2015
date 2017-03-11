@@ -22,6 +22,17 @@ class RigArm():
 	def __init__(self):
 		print 'processing init'
 
+		self.jsonInfo = None
+        self.keyNames = None
+        self.rigInfo = {}
+        #defaultData = {'bodyPart': 'default', 'bodySide': 'default', 'rigType': 'default'}
+        #self.initialize_all_things(**defaultData)
+         
+
+	def initializeEverything(self, dictCombo):
+		parts = dictCombo.get('bodyPart')
+		print parts
+		
 		fileName = os.environ['DATA_PATH']
 		#if bodyPart == 'leg':
 		#	fileName = fileName + 'legData.json'
@@ -29,6 +40,7 @@ class RigArm():
 		fileName = fileName + 'armData.json'
 
 		self.jsonInfo = json.loads(utils.readJson(fileName))
+
 		self.keyNames = self.jsonInfo.get('keyNames')
 		# index 0 = jnts, index 1 = ikCtrls, index 2 = fkCtrls, index 3 = ctrlGrps, index 4 = jntPos
 
@@ -87,7 +99,7 @@ class RigArm():
 
 	def ikSetup(self, side):
 		# create IK handle
-		ikName = utils.searchControls(self, 'ikh', 'ik')
+		ikName = utils.searchControls(self, 'ikh', 'ik', self.rigInfo.get(self.keyNames[1]))
 		ikName = side+ikName
 		pm.ikHandle(name=ikName, startJoint=side+'ik_shoulder_jnt', endEffector=side+'ik_wrist_jnt', solver='ikRPsolver', priority=2, weight=1)
 
@@ -95,11 +107,11 @@ class RigArm():
 		posWrist = pm.xform(side+'ik_wrist_jnt', query=True, translation=True, worldSpace=True)
 
 		# create an empty group and orient to wrist
-		grpName = side+utils.searchGroups(self, 'ikWrist')
+		grpName = side+utils.searchGroups(self, 'ikWrist', self.rigInfo.get(self.keyNames[3]))
 		pm.group(empty=True, name=grpName)
 		
 		# create square control
-		ctrlName = side+utils.searchControls(self, 'Wrist', 'ik')
+		ctrlName = side+utils.searchControls(self, 'Wrist', 'ik', self.rigInfo.get(self.keyNames[1]))
 		ctrl = cShape.square(self, ctrlName)
 
 		# parent control to group
@@ -135,10 +147,10 @@ class RigArm():
 			jntName = 'fk' + jnt.split('_')[2].title()
 
 			# create group from joint name
-			grpName = side+utils.searchGroups(self, jntName)
+			grpName = side+utils.searchGroups(self, jntName, self.rigInfo.get(self.keyNames[3]))
 			grp = pm.group(name=grpName, empty=True)
 
-			ctrlName = utils.searchControls(self, jntName, 'fk')
+			ctrlName = utils.searchControls(self, jntName, 'fk', self.rigInfo.get(self.keyNames[2]))
 			ctrl = cShape.circle(self, ctrlName)
 			
 			# parent control to grp
@@ -166,7 +178,7 @@ class RigArm():
 		pm.select(side+'fk_shoulder_jnt', add=True)
 		pm.select(side+'ik_shoulder_jnt', add=True)
 
-		grpName = side+utils.searchGroups(self, 'arm')
+		grpName = side+utils.searchGroups(self, 'arm', self.rigInfo.get(self.keyNames[3]))
 		pm.group(name=grpName)
 
 		# select same joint from each arm and add orient constraint
@@ -198,7 +210,7 @@ class RigArm():
 		pm.setAttr('lctr_PV_arm.tz', posElbow[2] - 5)
 
 		# create pole vector control
-		ctrlName = side+utils.searchControls(self, 'PV', 'ik')
+		ctrlName = side+utils.searchControls(self, 'PV', 'ik', self.rigInfo.get(self.keyNames[1]))
 		ctrl = cShape.pointer(self, ctrlName)
 
 		# move control to locator position
@@ -222,7 +234,7 @@ class RigArm():
 
 	def switchSetup(self, side):
 		# creates text for IK/FK switch 
-		ctrlName = side+utils.searchControls(self, 'Hand', 'ik')
+		ctrlName = side+utils.searchControls(self, 'Hand', 'ik', self.rigInfo.get(self.keyNames[1]))
 		ctrl = cShape.text(self, ctrlName, 'switch')
 
 		# rename control
@@ -253,7 +265,6 @@ class RigArm():
 		pm.delete('lctr_switch')
 
 		pm.select(deselect=True)
-
 
 
 
