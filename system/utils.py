@@ -51,3 +51,18 @@ def symmetryConstraint(source, target):
         cmds.connectAttr(source + '.jointOrient', currentCons + '.target.targetJointOrient')
         cmds.connectAttr(currentCons + '.constrained.constraintJointOrient', target + '.jointOrient')
     cmds.parent(currentCons, target)
+    return currentCons
+
+def shapeCombine(target):
+
+	parentCtrls = []
+
+	for t in target:
+		cmds.makeIdentity(t, a = True, r = True)
+		parentCtrls.append(t)
+
+	cmds.parent(cmds.listRelatives(parentCtrls[1:], s = True, pa = True), parentCtrls[0],  r = True, s = True)
+
+	cmds.select(clear = True)
+
+	cmds.delete(parentCtrls[1:])

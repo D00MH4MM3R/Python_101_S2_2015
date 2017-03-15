@@ -1,21 +1,21 @@
 import maya.cmds as cmds
 import maya.OpenMaya as om
 import system.utils as utils
-import system.rig_utils as rig_utils
+import system.rig_utils as rig
 import os
 import json
 
 classname = 'rig_arm'
 
-class rig_arm:
+class rig_arm(rig.Rig_Utils):
 
     def __init__(self):
         self.rig_info = {}
         self.rig_data = {}
         self.layoutPos = {}
+        self.layoutOrient = {}
         self.sysPath =  os.environ["RDOJO_DATA"] + '/arm_log.json'
         self.dataPath = os.environ["RDOJO_DATA"] + '/arm_data.json'
-
 
     ## Importing parameters such as names and positions ##
     def importData(self, path):
@@ -31,26 +31,26 @@ class rig_arm:
     ## Executing the required functions for building the arm ##
     def rig_arm(self):
         self.stretch = cmds.checkBox('stretchArmBox', q = True, v = True)
-
-        reload(rig_utils)
         
         cmds.select(d = True)
 
         self.importData(self.dataPath)
         ## Build Left Arm ##
         self.getCoords('armLy', 'L')
+
+        self.getOrients('armLy', 'L')
         
-        self.rig_info['ikJnts_L'] = rig_utils.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][0], self.rig_data['bones'], self.layoutPos, self.rig_data['ext'][0])
+        self.rig_info['ikJnts_L'] = self.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][0], self.rig_data['bones'], self.layoutPos, self.layoutOrient, self.rig_data['ext'][0])
         
-        self.rig_info['fkJnts_L'] = rig_utils.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][1], self.rig_data['bones'], self.layoutPos, self.rig_data['ext'][0])
+        self.rig_info['fkJnts_L'] = self.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][1], self.rig_data['bones'], self.layoutPos, self.layoutOrient, self.rig_data['ext'][0])
         
-        self.rig_info['rigJnts_L'] = rig_utils.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][2], self.rig_data['bones'], self.layoutPos, self.rig_data['ext'][0])
+        self.rig_info['rigJnts_L'] = self.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][2], self.rig_data['bones'], self.layoutPos, self.layoutOrient, self.rig_data['ext'][0])
            
-        self.rig_info['ikArm_L'] = rig_utils.ikSystemCreation(self.rig_info['ikJnts_L'][0], self.rig_info['ikJnts_L'][1], self.rig_info['ikJnts_L'][2], self.rig_data['ext'][0])
+        self.rig_info['ikArm_L'] = self.ikSystemCreation(self.rig_info['ikJnts_L'][0], self.rig_info['ikJnts_L'][1], self.rig_info['ikJnts_L'][2], self.rig_data['ext'][0])
         
-        self.rig_info['fkCtrls_L'] = rig_utils.fkSystem(self.rig_info['fkJnts_L'][0])
+        self.rig_info['fkCtrls_L'] = self.fkSystem(self.rig_info['fkJnts_L'][0])
         
-        self.rig_info['nodes_L'] = rig_utils.ikFkBlend(self.rig_info['rigJnts_L'], self.rig_info['ikJnts_L'], self.rig_info['fkJnts_L'], self.rig_data['ext'][0])
+        self.rig_info['nodes_L'] = self.ikFkBlend(self.rig_info['rigJnts_L'], self.rig_info['ikJnts_L'], self.rig_info['fkJnts_L'], self.rig_data['ext'][0])
 
         self.cleanUpLeft()
 
@@ -58,44 +58,34 @@ class rig_arm:
         
 
         if self.stretch == 1:
-            self.rig_info['stretchNodes_L'] = rig_utils.stretchNodes(self.rig_data['prefix'][0], self.rig_info['ikJnts_L'][0], self.rig_info['ikJnts_L'][1], self.rig_info['ikJnts_L'][2], self.rig_info['ikArm_L'][3], self.rig_info['rigJnts_L'], self.rig_data['ext'][0])
+            self.rig_info['stretchNodes_L'] = self.stretchNodes(self.rig_data['prefix'][0], self.rig_info['ikJnts_L'][0], self.rig_info['ikJnts_L'][1], self.rig_info['ikJnts_L'][2], self.rig_info['ikArm_L'][3], self.rig_info['rigJnts_L'], self.rig_data['ext'][0])
 
 
         ## Build Right Arm ##
         self.getCoords('armLy', 'R')
+
+        self.getOrients('armLy', 'R')
         
-        self.rig_info['ikJnts_R'] = rig_utils.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][0], self.rig_data['bones'], self.layoutPos, self.rig_data['ext'][2])
+        self.rig_info['ikJnts_R'] = self.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][0], self.rig_data['bones'], self.layoutPos, self.layoutOrient, self.rig_data['ext'][2])
         
-        self.rig_info['fkJnts_R'] = rig_utils.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][1], self.rig_data['bones'], self.layoutPos, self.rig_data['ext'][2])
+        self.rig_info['fkJnts_R'] = self.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][1], self.rig_data['bones'], self.layoutPos, self.layoutOrient, self.rig_data['ext'][2])
         
-        self.rig_info['rigJnts_R'] = rig_utils.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][2], self.rig_data['bones'], self.layoutPos, self.rig_data['ext'][2])
+        self.rig_info['rigJnts_R'] = self.jointCreation(self.rig_data['prefix'][0], self.rig_data['type'][2], self.rig_data['bones'], self.layoutPos, self.layoutOrient, self.rig_data['ext'][2])
            
-        self.rig_info['ikArm_R'] = rig_utils.ikSystemCreation(self.rig_info['ikJnts_R'][0], self.rig_info['ikJnts_R'][1], self.rig_info['ikJnts_R'][2], self.rig_data['ext'][2])
+        self.rig_info['ikArm_R'] = self.ikSystemCreation(self.rig_info['ikJnts_R'][0], self.rig_info['ikJnts_R'][1], self.rig_info['ikJnts_R'][2], self.rig_data['ext'][2])
         
-        self.rig_info['fkCtrls_R'] = rig_utils.fkSystem(self.rig_info['fkJnts_R'][0])
+        self.rig_info['fkCtrls_R'] = self.fkSystem(self.rig_info['fkJnts_R'][0])
         
-        self.rig_info['nodes_R'] = rig_utils.ikFkBlend(self.rig_info['rigJnts_R'], self.rig_info['ikJnts_R'], self.rig_info['fkJnts_R'], self.rig_data['ext'][2])
+        self.rig_info['nodes_R'] = self.ikFkBlend(self.rig_info['rigJnts_R'], self.rig_info['ikJnts_R'], self.rig_info['fkJnts_R'], self.rig_data['ext'][2])
 
         self.cleanUpRight()
 
         utils.colOverride(self.rig_data['ext'][2], (self.rig_info['ikArm_R'][3], self.rig_info['ikArm_R'][4], self.rig_info['fkCtrls_R']))
         
         if self.stretch == 1:   
-            self.rig_info['stretchNodes_R'] = rig_utils.stretchNodes(self.rig_data['prefix'][0], self.rig_info['ikJnts_R'][0], self.rig_info['ikJnts_R'][1], self.rig_info['ikJnts_R'][2], self.rig_info['ikArm_R'][3], self.rig_info['rigJnts_R'], self.rig_data['ext'][2])
+            self.rig_info['stretchNodes_R'] = self.stretchNodes(self.rig_data['prefix'][0], self.rig_info['ikJnts_R'][0], self.rig_info['ikJnts_R'][1], self.rig_info['ikJnts_R'][2], self.rig_info['ikArm_R'][3], self.rig_info['rigJnts_R'], self.rig_data['ext'][2])
 
         utils.writeJson(self.sysPath, self.rig_info)
-        
-    ## Get the positions from the layout objects ##
-    def getCoords(self, ext, side):
-        # Select all the layout objects by type#
-        layoutObjs = cmds.ls(typ = 'joint')
-        for l in layoutObjs:
-            #Check to see if they should be taken into account for the arm#
-            name = l.split('_')
-            if name[0] == ext and name[2] == side:
-                #List their transform node and query their position#
-                name = l.split('_')[1]
-                self.layoutPos[name] = cmds.xform(l, ws = True, q = True, t = True)
 
 
     def cleanUpLeft(self, *args):

@@ -19,6 +19,7 @@ class RDojo_UI:
 
 		self.rigmodlist = []
 		rigcontents = os.listdir(os.environ["RIGGING_TOOL"] + '/rig')
+		print rigcontents
 		for m in rigcontents:
 			if '.pyc' not in m and '__init__' not in m:
 				self.rigmodlist.append(m)
