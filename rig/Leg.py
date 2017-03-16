@@ -29,8 +29,8 @@ class rig_leg(rig.Rig_Utils):
             return(self.stretchLegBox, self.twistLegBox)
 
     ## Executing the required functions for building the arm ##
-    def rig_leg(self):
-        self.stretch = cmds.checkBox('stretchLegBox', q = True, v = True)
+    def rig_leg(self, stretch):
+        self.stretch = stretch
 
         cmds.select(d = True)
 

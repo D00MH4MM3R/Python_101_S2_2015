@@ -200,7 +200,7 @@ class Rig_Utils:
         if side == 'LA' or side == 'LL':
             cmds.setAttr(cndStretch + '.operation', 3)
         elif side == 'RA' or side == 'RL':
-            cmds.setAttr(cndStretch + '.operation', 3)
+            cmds.setAttr(cndStretch + '.operation', 5)
            
         ##NodeConnections##
         cmds.connectAttr(distanceDim + 'Shape.distance', mdScaleOffset + '.input1X')
@@ -222,7 +222,7 @@ class Rig_Utils:
         ##value inversion for right side##
         if side == 'RA' or side == 'RL':
             mdDistanceInv = cmds.shadingNode('multiplyDivide', au = True, n = prefix + '_' + side + '_distance_Invert_MD')
-            cmds.setAttr(mdDistanceInv + '.input2X', 1)
+            cmds.setAttr(mdDistanceInv + '.input2X', -1)
             cmds.connectAttr(mdScaleOffset + '.outputX', mdDistanceInv + '.input1X')
             cmds.connectAttr(mdDistanceInv + '.outputX', mdDistance + '.input1X')
 

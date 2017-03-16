@@ -29,8 +29,8 @@ class rig_arm(rig.Rig_Utils):
             testBox = cmds.checkBox( 'test'+ name +'Box', label = "Test Joints")
             return(self.stretchArmBox, self.twistArmBox)
     ## Executing the required functions for building the arm ##
-    def rig_arm(self):
-        self.stretch = cmds.checkBox('stretchArmBox', q = True, v = True)
+    def rig_arm(self, stretch):
+        self.stretch = stretch
         
         cmds.select(d = True)
 

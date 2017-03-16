@@ -92,9 +92,8 @@ class RDojo_UI:
 		rig_arm = arm_rig.rig_arm()
 		print 'Rigging Arm'
 		#excecute the arm bulding function from within the variable that houses the class
-		#self.stretch = cmds.checkBox(self.uiElements['ArmBoxes'][0], q = True, v = True)
-		#return stretch
-		rig_arm.rig_arm()
+		self.stretch = cmds.checkBox(self.uiElements['ArmBoxes'][0], q = True, v = True)
+		rig_arm.rig_arm(self.stretch)
 
 
 	def leg_rig(self, *args):
@@ -106,9 +105,8 @@ class RDojo_UI:
 		print 'Rigging Leg'
 		print self.uiElements['LegBoxes']
 		#excecute the arm bulding function from within the variable that houses the class
-		rig_leg.rig_leg()
-		#self.stretch = cmds.checkBox(self.uiElements['LegBoxes'][0], q = True, v = True)
-		#return self.stretch
+		self.stretch = cmds.checkBox(self.uiElements['LegBoxes'][0], q = True, v = True)
+		rig_leg.rig_leg(self.stretch)
 
 	def riglayout(self, *args):
 		import layout.rig_Layout as rig_Layout
